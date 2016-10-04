@@ -1,0 +1,1011 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+-- {-# LANGUAGE RecordWildCards #-}
+--import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
+--import System.Exit (ExitCode(..), exitWith)
+--import Data.Foldable     (for_)
+import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
+import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
+-- import Data.Either       (isLeft)
+-- import Data.Map          (fromList)
+--import Anagram (anagramsFor)
+--import Beer (sing, verse)
+--import Data.Map (fromList)
+--import Data.Char (toUpper)
+--import WordSquare (normalizePlaintext, squareSize, plaintextSegments, ciphertext, normalizeCiphertext)
+--import SumOfMultiples (sumOfMultiples)
+--import Bob (responseFor)
+--import SpaceAge (Planet(..), ageOn)
+--import Accumulate (accumulate)
+--import AtBash (encode, decode)
+--import Grains (square, total)
+--import Sublist (Sublist(Equal,Sublist,Superlist,Unequal), sublist)
+--import DNA (toRNA)
+--import SecretHandshake (handshake)
+--import DNACount (count, nucleotideCounts)
+--import Wordy2 (answer)
+import RobotSimulator
+
+-- RobotSimulator
+main :: IO ()
+main = hspecWith defaultConfig {configFastFail = True} specs
+
+specs :: Spec
+specs = describe "robot-simulator" $ do
+
+    -- Test cases adapted from `exercism/x-common/robot-simulator.json`
+    -- on 2016-08-02. Some deviations exist and are noted in comments.
+
+    describe "mkRobot" $ do
+
+    -- The function described by the reference file
+    -- as `create` is called `mkRobot` in this track.
+
+      it "A robot is created with a position and a direction" $ do
+        let robot = mkRobot North (0, 0)
+        coordinates robot `shouldBe` (0, 0)
+        bearing     robot `shouldBe` North
+
+      it "Negative positions are allowed" $ do
+        let robot = mkRobot South (-1, -1)
+        coordinates robot `shouldBe` (-1, -1)
+        bearing     robot `shouldBe` South
+
+    -- The reference tests for `turnLeft` and `turnRight` describe
+    -- functions that are applied to robots positioned at (0, 0).
+    -- In this track, they are functions over directions, so those
+    -- test cases cannot be completely implemented.
+
+    describe "turnRight" $ do
+
+      it "turn from North" $ turnRight North `shouldBe` East
+      it "turn from East"  $ turnRight East  `shouldBe` South
+      it "turn from South" $ turnRight South `shouldBe` West
+      it "turn from West"  $ turnRight West  `shouldBe` North
+
+    describe "turnLeft" $ do
+
+      it "turn from North" $ turnLeft North `shouldBe` West
+      it "turn from West"  $ turnLeft West  `shouldBe` South
+      it "turn from South" $ turnLeft South `shouldBe` East
+      it "turn from East"  $ turnLeft East  `shouldBe` North
+
+    describe "simulate advance" $ do
+
+    -- The function described by the reference file as `advance`
+    -- doesn't exist in this track, so we test `simulate` with "A".
+
+      let dir `from` pos = simulate (mkRobot dir pos) "A"
+
+      it "does not change the direction" $
+        bearing (North `from` (0, 0)) `shouldBe` North
+
+      it "increases the y coordinate one when facing north" $
+        coordinates (North `from` (0, 0)) `shouldBe` (0, 1)
+
+      it "decreases the y coordinate by one when facing south" $
+        coordinates (South `from` (0, 0)) `shouldBe` (0, -1)
+
+      it "increases the x coordinate by one when facing east" $
+        coordinates (East `from` (0, 0)) `shouldBe` (1, 0)
+
+      it "decreases the x coordinate by one when facing west" $
+        coordinates (West `from` (0, 0)) `shouldBe `(-1, 0)
+
+    describe "simulate" $ do
+
+    -- The function described by the reference file as
+    -- `instructions` is called `simulate` in this track.
+
+      let simulation pos dir = simulate (mkRobot dir pos)
+
+      it "instructions to move west and north" $ do
+        let robot = simulation (0, 0) North "LAAARALA"
+        coordinates robot `shouldBe` (-4, 1)
+        bearing     robot `shouldBe` West
+
+      it "instructions to move west and south" $ do
+        let robot = simulation (2, -7) East "RRAAAAALA"
+        coordinates robot `shouldBe` (-3, -8)
+        bearing     robot `shouldBe` South
+
+      it "instructions to move east and north" $ do
+        let robot = simulation (8, 4) South "LAAARRRALLLL"
+        coordinates robot `shouldBe` (11, 5)
+        bearing     robot `shouldBe` North
+
+---- Wordy
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "wordy" $
+--          describe "answer" $ for_ cases test
+--  where
+--
+--    test Case{..} = it description assertion
+--      where
+--        assertion   = answer input `shouldBe` fromIntegral <$> expected
+--
+---- Test cases adapted from `exercism/x-common/wordy.json` on 2016-08-10.
+--
+--data Case = Case { description :: String
+--                 , input       :: String
+--                 , expected    :: Maybe Integer
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "addition"
+--               , input       = "What is 1 plus 1?"
+--               , expected    = Just 2
+--               }
+--        , Case { description = "more addition"
+--               , input       = "What is 53 plus 2?"
+--               , expected    = Just 55
+--               }
+--        , Case { description = "addition with negative numbers"
+--               , input       = "What is -1 plus -10?"
+--               , expected    = Just (-11)
+--               }
+--        , Case { description = "large addition"
+--               , input       = "What is 123 plus 45678?"
+--               , expected    = Just 45801
+--               }
+--        , Case { description = "subtraction"
+--               , input       = "What is 4 minus -12?"
+--               , expected    = Just 16
+--               }
+--        , Case { description = "multiplication"
+--               , input       = "What is -3 multiplied by 25?"
+--               , expected    = Just (-75)
+--               }
+--        , Case { description = "division"
+--               , input       = "What is 33 divided by -3?"
+--               , expected    = Just (-11)
+--               }
+--        , Case { description = "multiple additions"
+--               , input       = "What is 1 plus 1 plus 1?"
+--               , expected    = Just 3
+--               }
+--        , Case { description = "addition and subtraction"
+--               , input       = "What is 1 plus 5 minus -2?"
+--               , expected    = Just 8
+--               }
+--        , Case { description = "multiple subtraction"
+--               , input       = "What is 20 minus 4 minus 13?"
+--               , expected    = Just 3
+--               }
+--        , Case { description = "subtraction then addition"
+--               , input       = "What is 17 minus 6 plus 3?"
+--               , expected    = Just 14
+--               }
+--        , Case { description = "multiple multiplication"
+--               , input       = "What is 2 multiplied by -2 multiplied by 3?"
+--               , expected    = Just (-12)
+--               }
+--        , Case { description = "addition and multiplication"
+--               , input       = "What is -3 plus 7 multiplied by -2?"
+--               , expected    = Just (-8)
+--               }
+--        , Case { description = "multiple division"
+--               , input       = "What is -12 divided by 2 divided by -3?"
+--               , expected    = Just 2
+--               }
+--        , Case { description = "unknown operation"
+--               , input       = "What is 52 cubed?"
+--               , expected    = Nothing
+--               }
+--        , Case { description = "Non math question"
+--               , input       = "Who is the President of the United States?"
+--               , expected    = Nothing
+--               }
+--        ]
+
+---- Nucleotide counts
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "nucleotide-count" $ do
+--
+--    -- As of 2016-07-27, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    let x `matches`    y = x `shouldBe`  Right y
+--    let x `matchesMap` y = x `shouldBe` (Right . fromList) y
+--
+--    describe "count" $ do
+--
+--      it "empty dna strand has no adenosine" $
+--        count 'A' "" `matches` 0
+--
+--      it "repetitive cytidine gets counted" $
+--        count 'C' "CCCCC" `matches` 5
+--
+--      it "counts only thymidine" $
+--        count 'T' "GGGGGTAACCCGG" `matches` 1
+--
+--      it "validates nucleotides" $
+--        count 'X' "GACT" `shouldSatisfy` isLeft
+--
+--      it "validates strand" $
+--        count 'G' "GACYT" `shouldSatisfy` isLeft
+--
+--    describe "nucleotideCounts" $ do
+--
+--      it "empty dna strand has no nucleotides" $
+--        nucleotideCounts "" `matchesMap` [ ('A', 0)
+--                                         , ('C', 0)
+--                                         , ('G', 0)
+--                                         , ('T', 0) ]
+--
+--      it "repetitive-sequence-has-only-guanosine" $
+--        nucleotideCounts "GGGGGGGG" `matchesMap` [ ('A', 0)
+--                                                 , ('C', 0)
+--                                                 , ('G', 8)
+--                                                 , ('T', 0) ]
+--
+--      it "counts all nucleotides" $
+--        nucleotideCounts "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC"
+--        `matchesMap` [ ('A', 20)
+--                     , ('C', 12)
+--                     , ('G', 17)
+--                     , ('T', 21) ]
+--
+--      it "validates strand" $
+--        nucleotideCounts "GPAC" `shouldSatisfy` isLeft
+--
+---- Secret Handshake
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "secret-handshake" $ do
+--
+--    -- As of 2016-09-12, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    it "1 to wink" $ do
+--      handshake (1 :: Int) `shouldBe` ["wink"]
+--      handshake "1"        `shouldBe` ["wink"]
+--
+--    it "10 to double blink" $ do
+--      handshake (2 :: Int) `shouldBe` ["double blink"]
+--      handshake "10"       `shouldBe` ["double blink"]
+--
+--    it "100 to close your eyes" $ do
+--      handshake (4 :: Int) `shouldBe` ["close your eyes"]
+--      handshake "100"      `shouldBe` ["close your eyes"]
+--
+--    it "1000 to jump" $ do
+--      handshake (8 :: Int) `shouldBe` ["jump"]
+--      handshake "1000"     `shouldBe` ["jump"]
+--
+--    it "11 to wink and double blink" $ do
+--      handshake (3 :: Int) `shouldBe` ["wink", "double blink"]
+--      handshake "11"       `shouldBe` ["wink", "double blink"]
+--
+--    it "10011 to double blink and wink" $ do
+--      handshake (19 :: Int) `shouldBe` ["double blink", "wink"]
+--      handshake "10011"     `shouldBe` ["double blink", "wink"]
+--
+--    it "11111 to jump, close your eyes, double blink, and wink" $ do
+--      handshake (31 :: Int) `shouldBe` ["jump", "close your eyes", "double blink", "wink"]
+--      handshake "11111"     `shouldBe` ["jump", "close your eyes", "double blink", "wink"]
+--
+--    it "zero" $ do
+--      handshake (0 :: Int) `shouldBe` []
+--      handshake "0"        `shouldBe` []
+--
+--    it "gibberish" $
+--      handshake "piggies" `shouldBe` []
+--
+--    it "partial gibberish" $
+--      handshake "1piggies" `shouldBe` []
+-- RNA
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "rna-transcription" $
+--          describe "toRNA" $ for_ cases test
+--  where
+--    test Case{..} = it description $ toRNA dna `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common/rna-transcription.json` on 2016-07-24.
+--
+--data Case = Case { description ::       String
+--                 , dna         ::       String
+--                 , expected    :: Maybe String
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "rna complement of cytosine is guanine"
+--               , dna         =      "C"
+--               , expected    = Just "G"
+--               }
+--        , Case { description = "rna complement of guanine is cytosine"
+--               , dna         =      "G"
+--               , expected    = Just "C"
+--               }
+--        , Case { description = "rna complement of thymine is adenine"
+--               , dna         =      "T"
+--               , expected    = Just "A"
+--               }
+--        , Case { description = "rna complement of adenine is uracil"
+--               , dna         =      "A"
+--               , expected    = Just "U"
+--               }
+--        , Case { description = "rna complement"
+--               , dna         =      "ACGTGGTCTTAA"
+--               , expected    = Just "UGCACCAGAAUU"
+--               }
+--        , Case { description = "dna correctly handles invalid input"
+--               , dna         = "U"
+--               , expected    = Nothing
+--               }
+--        , Case { description = "dna correctly handles completely invalid input"
+--               , dna         = "XXX"
+--               , expected    = Nothing
+--               }
+--        , Case { description = "dna correctly handles partially invalid input"
+--               , dna         = "ACGTXXXCTTAA"
+--               , expected    = Nothing
+--               }
+--        ]
+--
+
+---- Sublist
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "sublist" $ do
+--          describe "standard tests" $ for_ cases test
+--          describe "track specific tests" $ do
+--
+--            let xs = replicate 1000 'x'
+--
+--            it "compare larger equal lists" $
+--              sublist xs xs
+--              `shouldBe` Equal
+--
+--            it "sublist early in huge list" $
+--              sublist [3, 4, 5] [1..1000000 :: Int]
+--              `shouldBe` Sublist
+--
+--            it "huge sublist not in huge list" $
+--              sublist [10..1000001] [1..1000000 :: Int]
+--              `shouldBe` Unequal
+--
+--            it "superlist early in huge list" $
+--              sublist [1..1000000] [3, 4, 5 :: Int]
+--              `shouldBe` Superlist
+--  where
+--
+--    test Case{..} = it explanation assertion
+--      where
+--        assertion   = sublist listOne listTwo `shouldBe` expectation
+--        explanation = unwords [ "sublist"
+--                              , show listOne
+--                              , show listTwo
+--                              , "-"
+--                              , description ]
+--
+---- Test cases adapted from `exercism/x-common/sublist.json` on 2016-07-27.
+--
+--data Case = Case { description :: String
+--                 , listOne     :: [Integer]
+--                 , listTwo     :: [Integer]
+--                 , expectation :: Sublist
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "empty lists"
+--               , listOne     = []
+--               , listTwo     = []
+--               , expectation = Equal
+--               }
+--        , Case { description = "empty list within non empty list"
+--               , listOne     = []
+--               , listTwo     = [1, 2, 3]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "non empty list contains empty list"
+--               , listOne     = [1, 2, 3]
+--               , listTwo     = []
+--               , expectation = Superlist
+--               }
+--        , Case { description = "list equals itself"
+--               , listOne     = [1, 2, 3]
+--               , listTwo     = [1, 2, 3]
+--               , expectation = Equal
+--               }
+--        , Case { description = "different lists"
+--               , listOne     = [1, 2, 3]
+--               , listTwo     = [2, 3, 4]
+--               , expectation = Unequal
+--               }
+--        , Case { description = "false start"
+--               , listOne     = [1, 2, 5]
+--               , listTwo     = [0, 1, 2, 3, 1, 2, 5, 6]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "consecutive"
+--               , listOne     = [1, 1, 2]
+--               , listTwo     = [0, 1, 1, 1, 2, 1, 2]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "sublist at start"
+--               , listOne     = [0, 1, 2]
+--               , listTwo     = [0, 1, 2, 3, 4, 5]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "sublist in middle"
+--               , listOne     = [2, 3, 4]
+--               , listTwo     = [0, 1, 2, 3, 4, 5]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "sublist at end"
+--               , listOne     = [3, 4, 5]
+--               , listTwo     = [0, 1, 2, 3, 4, 5]
+--               , expectation = Sublist
+--               }
+--        , Case { description = "at start of superlist"
+--               , listOne     = [0, 1, 2, 3, 4, 5]
+--               , listTwo     = [0, 1, 2]
+--               , expectation = Superlist
+--               }
+--        , Case { description = "in middle of superlist"
+--               , listOne     = [0, 1, 2, 3, 4, 5]
+--               , listTwo     = [2, 3]
+--               , expectation = Superlist
+--               }
+--        , Case { description = "at end of superlist"
+--               , listOne     = [0, 1, 2, 3, 4, 5]
+--               , listTwo     = [3, 4, 5]
+--               , expectation = Superlist
+--               }
+--        , Case { description = "first list missing element from second list"
+--               , listOne     = [1, 3]
+--               , listTwo     = [1, 2, 3]
+--               , expectation = Unequal
+--               }
+--        , Case { description = "second list missing element from first list"
+--               , listOne     = [1, 2, 3]
+--               , listTwo     = [1, 3]
+--               , expectation = Unequal
+--               }
+--        , Case { description = "order matters to a list"
+--               , listOne     = [1, 2, 3]
+--               , listTwo     = [3, 2, 1]
+--               , expectation = Unequal
+--               }
+--        ]
+--
+---- GRains
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "grains" $ do
+--          describe "square" $ for_ squareCases squareTest
+--          describe "total"  $ totalTest totalCase
+--  where
+--
+--    squareTest (description, n, expected) = it description assertion
+--      where
+--        assertion  = expression `shouldBe` expected
+--        expression = fmap fromIntegral . square . fromIntegral $ n
+--
+--    totalTest (description, expected) = it description assertion
+--      where
+--        assertion = fromIntegral total `shouldBe` expected
+--
+---- As of 2016-07-27, there was no reference file
+---- for the test cases in `exercism/x-common`.
+--
+--squareCases :: [(String, Integer, Maybe Integer)]
+--squareCases =
+--    [ ("square 1"             ,  1, Just                   1)
+--    , ("square 2"             ,  2, Just                   2)
+--    , ("square 3"             ,  3, Just                   4)
+--    , ("square 4"             ,  4, Just                   8)
+--    , ("square 16"            , 16, Just               32768)
+--    , ("square 32"            , 32, Just          2147483648)
+--    , ("square 64"            , 64, Just 9223372036854775808)
+--    , ("square negative"      , -1, Nothing                 )
+--    , ("square 0"             ,  0, Nothing                 )
+--    , ("square bigger than 64", 65, Nothing                 ) ]
+--
+--totalCase :: (String, Integer)
+--totalCase = ("total grains", 18446744073709551615)
+--
+-- AtBash
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "atbash-cipher" $ do
+--          describe "encode" $ for_ encodeCases $ test encode
+--          describe "decode" $ for_ decodeCases $ test decode
+--  where
+--    test f Case{..} = it description $ f phrase `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common/atbash-cipher.json` on 2016-08-02.
+--
+--data Case = Case { description :: String
+--                 , phrase      :: String
+--                 , expected    :: String
+--                 }
+--
+--encodeCases :: [Case]
+--encodeCases =
+--    [ Case { description = "encode yes"
+--           , phrase      = "yes"
+--           , expected    = "bvh"
+--           }
+--    , Case { description = "encode no"
+--           , phrase      = "no"
+--           , expected    = "ml"
+--           }
+--    , Case { description = "encode OMG"
+--           , phrase      = "OMG"
+--           , expected    = "lnt"
+--           }
+--    , Case { description = "encode spaces"
+--           , phrase      = "O M G"
+--           , expected    = "lnt"
+--           }
+--    , Case { description = "encode mindblowingly"
+--           , phrase      = "mindblowingly"
+--           , expected    = "nrmwy oldrm tob"
+--           }
+--    , Case { description = "encode numbers"
+--           , phrase      = "Testing,1 2 3, testing."
+--           , expected    = "gvhgr mt123 gvhgr mt"
+--           }
+--    , Case { description = "encode deep thought"
+--           , phrase      = "Truth is fiction."
+--           , expected    = "gifgs rhurx grlm"
+--           }
+--    , Case { description = "encode all the letters"
+--           , phrase      = "The quick brown fox jumps over the lazy dog."
+--           , expected    = "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
+--           }
+--    , Case { description = "encode ignores non ascii"
+--           , phrase      = "non ascii éignored"
+--           , expected    = "mlmzh xrrrt mlivw"
+--           }
+--    ]
+--
+--decodeCases :: [Case]
+--decodeCases =
+--    [ Case { description = "decode exercism"
+--           , phrase      = "vcvix rhn"
+--           , expected    = "exercism"
+--           }
+--    , Case { description = "decode a sentence"
+--           , phrase      = "zmlyh gzxov rhlug vmzhg vkkrm thglm v"
+--           , expected    = "anobstacleisoftenasteppingstone"
+--           }
+--    , Case { description = "decode numbers"
+--           , phrase      = "gvhgr mt123 gvhgr mt"
+--           , expected    = "testing123testing"
+--           }
+--    , Case { description = "decode all the letters"
+--           , phrase      = "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
+--           , expected    = "thequickbrownfoxjumpsoverthelazydog"
+--           }
+--    ]
+--
+-- Accumulate
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "accumulate" $ do
+--
+--    -- As of 2016-07-27, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    let square x = x * x :: Int
+--
+--    it "empty accumulation" $
+--      accumulate square []
+--      `shouldBe` []
+--
+--    it "accumulate squares" $
+--      accumulate square [1, 2, 3]
+--      `shouldBe` [1, 4, 9]
+--
+--    it "accumulate upcases" $
+--      accumulate (map toUpper) ["hello", "world"]
+--      `shouldBe` ["HELLO", "WORLD"]
+--
+--    it "accumulate reversed strings" $
+--      accumulate reverse ["the", "quick", "brown", "fox", "etc"]
+--      `shouldBe` ["eht", "kciuq", "nworb", "xof", "cte"]
+--
+--    it "accumulate recursively" $
+--      accumulate (\c -> accumulate ((c:) . show) ([1, 2, 3] :: [Int])) "abc"
+--      `shouldBe` [["a1", "a2", "a3"], ["b1", "b2", "b3"], ["c1", "c2", "c3"]]
+--
+--    it "accumulate non-strict" $
+--      take 1 (accumulate id ("nice work!" : error "accumulate should be even lazier, don't use reverse!"))
+--      `shouldBe` ["nice work!"]
+--
+--exitProperly :: IO Counts -> IO ()
+--exitProperly m = do
+--  counts <- m
+--  exitWith $ if failures counts /= 0 || errors counts /= 0 then ExitFailure 1 else ExitSuccess
+--
+--testCase :: String -> Assertion -> Test
+--testCase label assertion = TestLabel label (TestCase assertion)
+
+-- SpaceAge
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "space-age" $
+--          describe "ageOn" $ for_ cases test
+--  where
+--
+--    test Case{..} = it description assertion
+--      where
+--        expression  = ageOn planet $ fromIntegral seconds
+--        assertion   = roundAge expression `shouldBe` roundAge expected
+--        roundAge    = (/ 100) . fromIntegral . round . (* 100)
+--
+---- Test cases adapted from `exercism/x-common/space-age.json` on 2016-07-27.
+--
+--data Case = Case { description :: String
+--                 , planet      :: Planet
+--                 , seconds     :: Integer
+--                 , expected    :: Double
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "Earth"
+--               , planet      = Earth
+--               , seconds     = 1000000000
+--               , expected    = 31.69
+--               }
+--        , Case { description = "Mercury"
+--               , planet      = Mercury
+--               , seconds     = 2134835688
+--               , expected    = 280.88
+--               }
+--        , Case { description = "Venus"
+--               , planet      = Venus
+--               , seconds     = 189839836
+--               , expected    = 9.78
+--               }
+--        , Case { description = "Mars"
+--               , planet      = Mars
+--               , seconds     = 2329871239
+--               , expected    = 39.25
+--               }
+--        , Case { description = "Jupiter"
+--               , planet      = Jupiter
+--               , seconds     = 901876382
+--               , expected    = 2.41
+--               }
+--        , Case { description = "Saturn"
+--               , planet      = Saturn
+--               , seconds     = 3000000000
+--               , expected    = 3.23
+--               }
+--        , Case { description = "Uranus"
+--               , planet      = Uranus
+--               , seconds     = 3210123456
+--               , expected    = 1.21
+--               }
+--        , Case { description = "Neptune"
+--               , planet      = Neptune
+--               , seconds     = 8210123456
+--               , expected    = 1.58
+--               }
+--        ]
+--
+-- Bob
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "bob" $
+--          describe "responseFor" $ for_ cases test
+--  where
+--    test Case{..} = it description $ responseFor input `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common/bob.json` on 2016-07-24.
+--
+--data Case = Case { description :: String
+--                 , input       :: String
+--                 , expected    :: String
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "stating something"
+--               , input       = "Tom-ay-to, tom-aaaah-to."
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "shouting"
+--               , input       = "WATCH OUT!"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "shouting gibberish"
+--               , input       = "FCECDFCAAB"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "asking a question"
+--               , input       = "Does this cryogenic chamber make me look fat?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "asking a numeric question"
+--               , input       = "You are, what, like 15?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "asking gibberish"
+--               , input       = "fffbbcbeab?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "talking forcefully"
+--               , input       = "Let's go make out behind the gym!"
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "using acronyms in regular speech"
+--               , input       = "It's OK if you don't want to go to the DMV."
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "forceful question"
+--               , input       = "WHAT THE HELL WERE YOU THINKING?"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "shouting numbers"
+--               , input       = "1, 2, 3 GO!"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "only numbers"
+--               , input       = "1, 2, 3"
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "question with only numbers"
+--               , input       = "4?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "shouting with special characters"
+--               , input       = "ZOMG THE %^*@#$(*^ ZOMBIES ARE COMING!!11!!1!"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "shouting with umlauts"
+--               , input       = "ÜMLÄÜTS!"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "calmly speaking with umlauts"
+--               , input       = "ÜMLäÜTS!"
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "shouting with no exclamation mark"
+--               , input       = "I HATE YOU"
+--               , expected    = "Whoa, chill out!"
+--               }
+--        , Case { description = "statement containing question mark"
+--               , input       = "Ending with ? means a question."
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "non-letters with question"
+--               , input       = ":) ?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "prattling on"
+--               , input       = "Wait! Hang on. Are you going to be OK?"
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "silence"
+--               , input       = ""
+--               , expected    = "Fine. Be that way!"
+--               }
+--        , Case { description = "prolonged silence"
+--               , input       = "          "
+--               , expected    = "Fine. Be that way!"
+--               }
+--        , Case { description = "alternate silence"
+--               , input       = "\t\t\t\t\t\t\t\t\t\t"
+--               , expected    = "Fine. Be that way!"
+--               }
+--        , Case { description = "multiple line question"
+--               , input       = "\nDoes this cryogenic chamber make me look fat?\nno"
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "starting with whitespace"
+--               , input       = "         hmmmmmmm..."
+--               , expected    = "Whatever."
+--               }
+--        , Case { description = "ending with whitespace"
+--               , input       = "Okay if like my  spacebar  quite a bit?   "
+--               , expected    = "Sure."
+--               }
+--        , Case { description = "other whitespace"
+--               , input       = "\n\r \t\x000b\x00a0\x2002"
+--               , expected    = "Fine. Be that way!"
+--               }
+--        , Case { description = "non-question ending with whitespace"
+--               , input       = "This is a statement ending with whitespace      "
+--               , expected    = "Whatever."
+--               }
+--        ]
+-- SumOfMultiples
+--main :: IO ()
+--main = exitProperly $ runTestTT $ TestList
+--       [ TestList sumOfMultiplesTests ]
+--
+---- Note that the upper bound is not included in the result
+--sumOfMultiplesTests :: [Test]
+--sumOfMultiplesTests =
+--  [ testCase "1" $
+--    0 @=? sumOfMultiples [3, 5] 1
+--  , testCase "4" $
+--    3 @=? sumOfMultiples [3, 5] 4
+--  , testCase "10" $
+--    23 @=? sumOfMultiples [3, 5] 10
+--  , testCase "1000" $
+--    2318 @=? sumOfMultiples [3, 5] 100
+--  , testCase "1000" $
+--    233168 @=? sumOfMultiples [3, 5] 1000
+--  , testCase "[7, 13, 17] 20" $
+--    51 @=? sumOfMultiples [7, 13, 17] 20
+--  , testCase "[4, 6] 15" $
+--    30 @=? sumOfMultiples [4, 6] 15
+--  , testCase "[5, 6, 8] 150" $
+--    4419 @=? sumOfMultiples [5, 6, 8] 150
+--  , testCase "[43, 47] 10000" $
+--    275 @=? sumOfMultiples [5,25] 51
+--  , testCase "[1] 100" $
+--    2203160 @=? sumOfMultiples [43, 47] 10000
+--  , testCase "[5, 25] 51" $
+--    4950 @=? sumOfMultiples [1] 100
+--  , testCase "[] 10000" $
+--    0 @=? sumOfMultiples [] 10000
+--  ]
+
+-- Word square
+--main :: IO ()
+--main = exitProperly $ runTestTT $ TestList
+--       [ TestLabel "normalizePlaintext" $ TestList normalizePlaintextTests
+--       , TestLabel "squareSize" $ TestList squareSizeTests
+--       , TestLabel "plaintextSegments" $ TestList plaintextSegmentsTests
+--       , TestLabel "ciphertext" $ TestList ciphertextTests
+--       , TestLabel "normalizeCiphertext" $ TestList normalizeCiphertextTests
+--       ]
+--
+--normalizePlaintextTests :: [Test]
+--normalizePlaintextTests = map TestCase
+--  [ "splunk" @=? normalizePlaintext "s#!@$%plunk"
+--  , "123go" @=? normalizePlaintext "1, 2, 3 GO!"
+--  ]
+--
+--squareSizeTests :: [Test]
+--squareSizeTests = map TestCase
+--  [ 2 @=? squareSize "1234"
+--  , 3 @=? squareSize "123456789"
+--  , 4 @=? squareSize "123456789abc" ]
+--
+--plaintextSegmentsTests :: [Test]
+--plaintextSegmentsTests = map TestCase
+--  [ ["neverv", "exthin", "eheart", "withid", "lewoes"] @=?
+--    plaintextSegments "Never vex thine heart with idle woes."
+--  , ["zomg", "zomb", "ies"] @=?
+--    plaintextSegments "ZOMG! ZOMBIES!!!"
+--  ]
+--
+--ciphertextTests :: [Test]
+--ciphertextTests = map TestCase
+--  [ "tasneyinicdsmiohooelntuillibsuuml" @=?
+--    ciphertext "Time is an illusion. Lunchtime doubly so."
+--  , "wneiaweoreneawssciliprerlneoidktcms" @=?
+--    ciphertext "We all know interspecies romance is weird."
+--  ]
+--
+--normalizeCiphertextTests :: [Test]
+--normalizeCiphertextTests = map TestCase
+--  [ "msemo aanin dnin ndla etlt shui" @=?
+--    normalizeCiphertext "Madness, and then illumination."
+--  , "vrel aepe mset paoo irpo" @=?
+--     normalizeCiphertext "Vampires are people too!"
+--  , "imtgdvs fearwer mayoogo anouuio ntnnlvt wttddes aohghn sseoau" @=?
+--     normalizeCiphertext "If man was meant to stay on the ground god would \
+--                         \have given us roots"
+--  ]
+
+-- Wordcount
+-- main :: IO ()
+-- main = exitProperly (runTestTT (TestList wordCountTests))
+-- 
+-- wordCountTests :: [Test]
+-- wordCountTests =
+--   [ testCase "count one word" $
+--     fromList [("word", 1)] @=? wordCount "word"
+--   , testCase "count one of each" $
+--     fromList [("one", 1), ("of", 1), ("each", 1)] @=? wordCount "one of each"
+--   , testCase "count multiple occurrences" $
+--     fromList [("one", 1), ("fish", 4), ("two", 1),
+--               ("red", 1), ("blue", 1)] @=?
+--     wordCount "one fish two fish red fish blue fish"
+--   , testCase "ignore punctuation" $
+--     fromList [("car", 1), ("carpet", 1), ("as", 1),
+--               ("java", 1), ("javascript", 1)] @=?
+--     wordCount "car : carpet as java : javascript!!&@$%^&"
+--   , testCase "include numbers" $
+--     fromList [("testing", 2), ("1", 1), ("2", 1)] @=?
+--     wordCount "testing, 1, 2 testing"
+--   , testCase "normalize case" $
+--     fromList [("go", 3)] @=? wordCount "go Go GO"
+--   , testCase "prefix punctuation" $
+--     fromList [("testing", 2), ("1", 1), ("2", 1)] @=?
+--     wordCount "!%%#testing, 1, 2 testing"
+--   , testCase "symbols are separators" $
+--     fromList [("hey", 1), ("my", 1), ("spacebar", 1),
+--               ("is", 1), ("broken", 1)] @=?
+--     wordCount "hey,my_spacebar_is_broken."
+--   ]
+
+-- Anagram
+--main :: IO ()
+--main = exitProperly (runTestTT (TestList anagramTests))
+--
+--anagramTests :: [Test]
+--anagramTests =
+--  [ testCase "no matches" $
+--    [] @=? anagramsFor "diaper" ["hello", "world", "zombies", "pants"]
+--  , testCase "detect simple anagram" $
+--    ["tan"] @=? anagramsFor "ant" ["tan", "stand", "at"]
+--  , testCase "does not confuse different duplicates" $
+--    [] @=? anagramsFor "galea" ["eagle"]
+--  , testCase "eliminate anagram subsets" $
+--    [] @=? anagramsFor "good" ["dog", "goody"]
+--  , testCase "detect anagram" $
+--    ["inlets"] @=? anagramsFor "listen" ["enlists", "google",
+--                                         "inlets", "banana"]
+--  , testCase "multiple anagrams" $
+--    ["gallery", "regally", "largely"] @=?
+--    anagramsFor "allergy" ["gallery", "ballerina", "regally", "clergy",
+--                           "largely", "leading"]
+--  , testCase "case insensitive anagrams" $
+--    ["Carthorse"] @=?
+--    anagramsFor "Orchestra" ["cashregister", "Carthorse", "radishes"]
+--  , testCase "does not detect a word as its own anagram" $
+--    [] @=? anagramsFor "banana" ["banana"]
+--  , testCase "does not detect a word as its own anagram (case insensitive)" $
+--    [] @=? anagramsFor "Banana" ["baNana"]
+--  ]
+--
+
+-- Beer
+-- main :: IO ()
+-- main = exitProperly (runTestTT (TestList [TestList verseTests, TestList singTests]))
+-- 
+-- verse_8, verse_2, verse_1, verse_0 :: String
+-- verse_8 = "8 bottles of beer on the wall, 8 bottles of beer.\nTake one down and pass it around, 7 bottles of beer on the wall.\n"
+-- verse_2 = "2 bottles of beer on the wall, 2 bottles of beer.\nTake one down and pass it around, 1 bottle of beer on the wall.\n"
+-- verse_1 = "1 bottle of beer on the wall, 1 bottle of beer.\nTake it down and pass it around, no more bottles of beer on the wall.\n"
+-- verse_0 = "No more bottles of beer on the wall, no more bottles of beer.\nGo to the store and buy some more, 99 bottles of beer on the wall.\n"
+-- 
+-- song_8_6, song_3_0 :: String
+-- song_8_6 = "8 bottles of beer on the wall, 8 bottles of beer.\nTake one down and pass it around, 7 bottles of beer on the wall.\n\n7 bottles of beer on the wall, 7 bottles of beer.\nTake one down and pass it around, 6 bottles of beer on the wall.\n\n6 bottles of beer on the wall, 6 bottles of beer.\nTake one down and pass it around, 5 bottles of beer on the wall.\n\n"
+-- song_3_0 = "3 bottles of beer on the wall, 3 bottles of beer.\nTake one down and pass it around, 2 bottles of beer on the wall.\n\n2 bottles of beer on the wall, 2 bottles of beer.\nTake one down and pass it around, 1 bottle of beer on the wall.\n\n1 bottle of beer on the wall, 1 bottle of beer.\nTake it down and pass it around, no more bottles of beer on the wall.\n\nNo more bottles of beer on the wall, no more bottles of beer.\nGo to the store and buy some more, 99 bottles of beer on the wall.\n\n"
+-- 
+-- 
+-- verseTests :: [Test]
+-- verseTests =
+--   [ testCase "verse 8" $ verse_8 @=? verse 8
+--   , testCase "verse 2" $ verse_2 @=? verse 2
+--   , testCase "verse 1" $ verse_1 @=? verse 1
+--   , testCase "verse 0" $ verse_0 @=? verse 0
+--   ]
+-- 
+-- singTests :: [Test]
+-- singTests =
+--   [ testCase "song 8 6" $ song_8_6 @=? sing 8 6
+--   , testCase "song 3 0" $ song_3_0 @=? sing 3 0
+--   ]
