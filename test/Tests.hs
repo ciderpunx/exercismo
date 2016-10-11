@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
--- {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
---import Data.Foldable     (for_)
+import Data.Foldable     (for_)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
@@ -23,96 +23,150 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import SecretHandshake (handshake)
 --import DNACount (count, nucleotideCounts)
 --import Wordy2 (answer)
-import RobotSimulator
+-- import RobotSimulator
+import Leap (isLeapYear)
 
--- RobotSimulator
+-- Leap
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "robot-simulator" $ do
+specs = describe "leap" $
+          describe "isLeapYear" $ for_ cases test
+  where
 
-    -- Test cases adapted from `exercism/x-common/robot-simulator.json`
-    -- on 2016-08-02. Some deviations exist and are noted in comments.
+    test Case{..} = it explanation assertion
+      where
+        explanation = unwords [show input, "-", description]
+        assertion   = isLeapYear (fromIntegral input) `shouldBe` expected
 
-    describe "mkRobot" $ do
+-- Test cases adapted from `exercism/x-common/leap.json` on 2016-07-27.
 
-    -- The function described by the reference file
-    -- as `create` is called `mkRobot` in this track.
+data Case = Case { description :: String
+                 , input       :: Integer
+                 , expected    :: Bool
+                 }
 
-      it "A robot is created with a position and a direction" $ do
-        let robot = mkRobot North (0, 0)
-        coordinates robot `shouldBe` (0, 0)
-        bearing     robot `shouldBe` North
+cases :: [Case]
+cases = [ Case { description = "leap year"
+               , input       = 1996
+               , expected    = True
+               }
+        , Case { description = "standard and odd year"
+               , input       = 1997
+               , expected    = False
+               }
+        , Case { description = "standard even year"
+               , input       = 1998
+               , expected    = False
+               }
+        , Case { description = "standard nineteenth century"
+               , input       = 1900
+               , expected    = False
+               }
+        , Case { description = "standard eighteenth century"
+               , input       = 1800
+               , expected    = False
+               }
+        , Case { description = "leap twenty fourth century"
+               , input       = 2400
+               , expected    = True
+               }
+        , Case { description = "leap y2k"
+               , input       = 2000
+               , expected    = True
+               }
+        ]
 
-      it "Negative positions are allowed" $ do
-        let robot = mkRobot South (-1, -1)
-        coordinates robot `shouldBe` (-1, -1)
-        bearing     robot `shouldBe` South
 
-    -- The reference tests for `turnLeft` and `turnRight` describe
-    -- functions that are applied to robots positioned at (0, 0).
-    -- In this track, they are functions over directions, so those
-    -- test cases cannot be completely implemented.
-
-    describe "turnRight" $ do
-
-      it "turn from North" $ turnRight North `shouldBe` East
-      it "turn from East"  $ turnRight East  `shouldBe` South
-      it "turn from South" $ turnRight South `shouldBe` West
-      it "turn from West"  $ turnRight West  `shouldBe` North
-
-    describe "turnLeft" $ do
-
-      it "turn from North" $ turnLeft North `shouldBe` West
-      it "turn from West"  $ turnLeft West  `shouldBe` South
-      it "turn from South" $ turnLeft South `shouldBe` East
-      it "turn from East"  $ turnLeft East  `shouldBe` North
-
-    describe "simulate advance" $ do
-
-    -- The function described by the reference file as `advance`
-    -- doesn't exist in this track, so we test `simulate` with "A".
-
-      let dir `from` pos = simulate (mkRobot dir pos) "A"
-
-      it "does not change the direction" $
-        bearing (North `from` (0, 0)) `shouldBe` North
-
-      it "increases the y coordinate one when facing north" $
-        coordinates (North `from` (0, 0)) `shouldBe` (0, 1)
-
-      it "decreases the y coordinate by one when facing south" $
-        coordinates (South `from` (0, 0)) `shouldBe` (0, -1)
-
-      it "increases the x coordinate by one when facing east" $
-        coordinates (East `from` (0, 0)) `shouldBe` (1, 0)
-
-      it "decreases the x coordinate by one when facing west" $
-        coordinates (West `from` (0, 0)) `shouldBe `(-1, 0)
-
-    describe "simulate" $ do
-
-    -- The function described by the reference file as
-    -- `instructions` is called `simulate` in this track.
-
-      let simulation pos dir = simulate (mkRobot dir pos)
-
-      it "instructions to move west and north" $ do
-        let robot = simulation (0, 0) North "LAAARALA"
-        coordinates robot `shouldBe` (-4, 1)
-        bearing     robot `shouldBe` West
-
-      it "instructions to move west and south" $ do
-        let robot = simulation (2, -7) East "RRAAAAALA"
-        coordinates robot `shouldBe` (-3, -8)
-        bearing     robot `shouldBe` South
-
-      it "instructions to move east and north" $ do
-        let robot = simulation (8, 4) South "LAAARRRALLLL"
-        coordinates robot `shouldBe` (11, 5)
-        bearing     robot `shouldBe` North
-
+---- RobotSimulator
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "robot-simulator" $ do
+--
+--    -- Test cases adapted from `exercism/x-common/robot-simulator.json`
+--    -- on 2016-08-02. Some deviations exist and are noted in comments.
+--
+--    describe "mkRobot" $ do
+--
+--    -- The function described by the reference file
+--    -- as `create` is called `mkRobot` in this track.
+--
+--      it "A robot is created with a position and a direction" $ do
+--        let robot = mkRobot North (0, 0)
+--        coordinates robot `shouldBe` (0, 0)
+--        bearing     robot `shouldBe` North
+--
+--      it "Negative positions are allowed" $ do
+--        let robot = mkRobot South (-1, -1)
+--        coordinates robot `shouldBe` (-1, -1)
+--        bearing     robot `shouldBe` South
+--
+--    -- The reference tests for `turnLeft` and `turnRight` describe
+--    -- functions that are applied to robots positioned at (0, 0).
+--    -- In this track, they are functions over directions, so those
+--    -- test cases cannot be completely implemented.
+--
+--    describe "turnRight" $ do
+--
+--      it "turn from North" $ turnRight North `shouldBe` East
+--      it "turn from East"  $ turnRight East  `shouldBe` South
+--      it "turn from South" $ turnRight South `shouldBe` West
+--      it "turn from West"  $ turnRight West  `shouldBe` North
+--
+--    describe "turnLeft" $ do
+--
+--      it "turn from North" $ turnLeft North `shouldBe` West
+--      it "turn from West"  $ turnLeft West  `shouldBe` South
+--      it "turn from South" $ turnLeft South `shouldBe` East
+--      it "turn from East"  $ turnLeft East  `shouldBe` North
+--
+--    describe "simulate advance" $ do
+--
+--    -- The function described by the reference file as `advance`
+--    -- doesn't exist in this track, so we test `simulate` with "A".
+--
+--      let dir `from` pos = simulate (mkRobot dir pos) "A"
+--
+--      it "does not change the direction" $
+--        bearing (North `from` (0, 0)) `shouldBe` North
+--
+--      it "increases the y coordinate one when facing north" $
+--        coordinates (North `from` (0, 0)) `shouldBe` (0, 1)
+--
+--      it "decreases the y coordinate by one when facing south" $
+--        coordinates (South `from` (0, 0)) `shouldBe` (0, -1)
+--
+--      it "increases the x coordinate by one when facing east" $
+--        coordinates (East `from` (0, 0)) `shouldBe` (1, 0)
+--
+--      it "decreases the x coordinate by one when facing west" $
+--        coordinates (West `from` (0, 0)) `shouldBe `(-1, 0)
+--
+--    describe "simulate" $ do
+--
+--    -- The function described by the reference file as
+--    -- `instructions` is called `simulate` in this track.
+--
+--      let simulation pos dir = simulate (mkRobot dir pos)
+--
+--      it "instructions to move west and north" $ do
+--        let robot = simulation (0, 0) North "LAAARALA"
+--        coordinates robot `shouldBe` (-4, 1)
+--        bearing     robot `shouldBe` West
+--
+--      it "instructions to move west and south" $ do
+--        let robot = simulation (2, -7) East "RRAAAAALA"
+--        coordinates robot `shouldBe` (-3, -8)
+--        bearing     robot `shouldBe` South
+--
+--      it "instructions to move east and north" $ do
+--        let robot = simulation (8, 4) South "LAAARRRALLLL"
+--        coordinates robot `shouldBe` (11, 5)
+--        bearing     robot `shouldBe` North
+--
 ---- Wordy
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs

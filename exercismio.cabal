@@ -24,6 +24,7 @@ library
                      , DNA
                      , DNACount
                      , Grains
+                     , Leap
                      , RobotSimulator
                      , SecretHandshake
                      , SpaceAge
