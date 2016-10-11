@@ -1,20 +1,18 @@
 module RobotSimulator where
 
-data Bearing = North | East | South | West deriving (Show, Eq)
-type Location = (Int,Int)
+data Bearing = North | East | South | West deriving (Show, Eq, Enum)
+
+type Location = (Int, Int)
+
 data Robot = Robot Bearing Location deriving Show
 
 turnRight :: Bearing -> Bearing
-turnRight North = East
-turnRight East  = South
-turnRight South = West
-turnRight West  = North
+turnRight West = North
+turnRight b    = succ b
 
 turnLeft :: Bearing -> Bearing
 turnLeft North = West
-turnLeft East  = North
-turnLeft South = East
-turnLeft West  = South
+turnLeft b     = pred b
 
 left :: Robot -> Robot
 left (Robot b l) = Robot (turnLeft b) l
@@ -36,9 +34,9 @@ charToMove 'L' = left
 moveBot :: Robot -> String -> Robot
 moveBot = foldl (flip charToMove)
 
--- Testing functions from exercismo
+-- Testing functions from exercism.io
 bearing :: Robot -> Bearing
-bearing (Robot b _)         = b
+bearing (Robot b _) = b
 
 coordinates :: Robot -> Location
 coordinates (Robot _ (x,y)) = (x,y)
