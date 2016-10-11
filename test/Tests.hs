@@ -1,12 +1,13 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# LANGUAGE RecordWildCards #-}
+-- {-# LANGUAGE RecordWildCards #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
-import Data.Foldable     (for_)
+--import Data.Foldable     (for_)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
 -- import Data.Map          (fromList)
+import Data.List (isPrefixOf)
 --import Anagram (anagramsFor)
 --import Beer (sing, verse)
 --import Data.Map (fromList)
@@ -24,60 +25,125 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import DNACount (count, nucleotideCounts)
 --import Wordy2 (answer)
 -- import RobotSimulator
-import Leap (isLeapYear)
+-- import Leap (isLeapYear)
+import Strain (keep, discard)
 
--- Leap
+-- Strain
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "leap" $
-          describe "isLeapYear" $ for_ cases test
-  where
+specs = describe "strain" $ do
 
-    test Case{..} = it explanation assertion
-      where
-        explanation = unwords [show input, "-", description]
-        assertion   = isLeapYear (fromIntegral input) `shouldBe` expected
+    -- As of 2016-07-27, there was no reference file
+    -- for the test cases in `exercism/x-common`.
 
--- Test cases adapted from `exercism/x-common/leap.json` on 2016-07-27.
+    it "empty keep" $
+        keep (<10) [] `shouldBe` ([] :: [Int])
 
-data Case = Case { description :: String
-                 , input       :: Integer
-                 , expected    :: Bool
-                 }
+    it "keep everything" $
+        keep (<10) [1, 2, 3] `shouldBe` [1, 2, 3 :: Int]
 
-cases :: [Case]
-cases = [ Case { description = "leap year"
-               , input       = 1996
-               , expected    = True
-               }
-        , Case { description = "standard and odd year"
-               , input       = 1997
-               , expected    = False
-               }
-        , Case { description = "standard even year"
-               , input       = 1998
-               , expected    = False
-               }
-        , Case { description = "standard nineteenth century"
-               , input       = 1900
-               , expected    = False
-               }
-        , Case { description = "standard eighteenth century"
-               , input       = 1800
-               , expected    = False
-               }
-        , Case { description = "leap twenty fourth century"
-               , input       = 2400
-               , expected    = True
-               }
-        , Case { description = "leap y2k"
-               , input       = 2000
-               , expected    = True
-               }
-        ]
+    it "keep first and last" $
+        keep odd [1, 2, 3] `shouldBe` [1, 3 :: Int]
 
+    it "keep nothing" $
+        keep even [1, 3, 5, 7] `shouldBe` ([] :: [Int])
+
+    it "keep neither first nor last" $
+        keep even [1, 2, 3] `shouldBe` [2 :: Int]
+
+    it "keep strings" $
+        keep ("z" `isPrefixOf`)
+        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
+        `shouldBe`
+        ["zebra", "zombies", "zealot"]
+
+    it "empty discard" $
+        discard (< 10) [] `shouldBe` ([] :: [Int])
+
+    it "discard everything" $
+        discard (< 10) [1, 2, 3] `shouldBe` ([] :: [Int])
+
+    it "discard first and last" $
+        discard odd [1, 2, 3] `shouldBe` [2 :: Int]
+
+    it "discard nothing" $
+        discard even [1, 3, 5, 7] `shouldBe` [1, 3, 5, 7 :: Int]
+
+    it "discard neither first nor last" $
+        discard even [1, 2, 3] `shouldBe` [1, 3 :: Int]
+
+    it "discard strings" $
+        discard ("z" `isPrefixOf`)
+        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
+        `shouldBe`
+        ["apple", "banana", "cherimoya"]
+
+    it "keep non-strict" $
+        (take 1 . keep (const True))
+        ("yes" : error "keep should be lazier - don't look at list elements you don't need!")
+        `shouldBe`
+        ["yes"]
+
+    it "discard non-strict" $
+        (take 1 . discard (const False))
+        ("yes" : error "discard should be lazier - don't look at list elements you don't need!")
+        `shouldBe`
+        ["yes"]
+
+---- Leap
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "leap" $
+--          describe "isLeapYear" $ for_ cases test
+--  where
+--
+--    test Case{..} = it explanation assertion
+--      where
+--        explanation = unwords [show input, "-", description]
+--        assertion   = isLeapYear (fromIntegral input) `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common/leap.json` on 2016-07-27.
+--
+--data Case = Case { description :: String
+--                 , input       :: Integer
+--                 , expected    :: Bool
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "leap year"
+--               , input       = 1996
+--               , expected    = True
+--               }
+--        , Case { description = "standard and odd year"
+--               , input       = 1997
+--               , expected    = False
+--               }
+--        , Case { description = "standard even year"
+--               , input       = 1998
+--               , expected    = False
+--               }
+--        , Case { description = "standard nineteenth century"
+--               , input       = 1900
+--               , expected    = False
+--               }
+--        , Case { description = "standard eighteenth century"
+--               , input       = 1800
+--               , expected    = False
+--               }
+--        , Case { description = "leap twenty fourth century"
+--               , input       = 2400
+--               , expected    = True
+--               }
+--        , Case { description = "leap y2k"
+--               , input       = 2000
+--               , expected    = True
+--               }
+--        ]
+--
 
 ---- RobotSimulator
 --main :: IO ()

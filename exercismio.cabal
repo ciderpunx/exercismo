@@ -28,6 +28,7 @@ library
                      , RobotSimulator
                      , SecretHandshake
                      , SpaceAge
+                     , Strain
                      , Sublist
                      , SumOfMultiples
                      , WordCount
