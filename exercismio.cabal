@@ -25,6 +25,7 @@ library
                      , DNACount
                      , Grains
                      , Leap
+                     , PhoneNumber
                      , RobotSimulator
                      , SecretHandshake
                      , SpaceAge
@@ -33,7 +34,7 @@ library
                      , SumOfMultiples
                      , WordCount
                      , WordSquare
-                     , Wordy   
+                     , Wordy
                      , Wordy2
   build-depends:       base >= 4.7 && < 5
                      , containers

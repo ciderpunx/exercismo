@@ -1,13 +1,13 @@
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
--- {-# LANGUAGE RecordWildCards #-}
+-- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+{-# LANGUAGE RecordWildCards #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
---import Data.Foldable     (for_)
+import Data.Foldable     (for_)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
 -- import Data.Map          (fromList)
-import Data.List (isPrefixOf)
+--import Data.List (isPrefixOf)
 --import Anagram (anagramsFor)
 --import Beer (sing, verse)
 --import Data.Map (fromList)
@@ -26,72 +26,186 @@ import Data.List (isPrefixOf)
 --import Wordy2 (answer)
 -- import RobotSimulator
 -- import Leap (isLeapYear)
-import Strain (keep, discard)
+-- import Strain (keep, discard)
+import PhoneNumber (areaCode, number, prettyPrint)
 
--- Strain
+-- PhoneNumber
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "strain" $ do
+specs = describe "phone-number" $ do
+          describe "number"      $ for_ numberCases      $ test number
+          describe "areaCode"    $ for_ areaCodeCases    $ test areaCode
+          describe "prettyPrint" $ for_ prettyPrintCases $ test prettyPrint
+  where
+    test f Case{..} = it description $ f input `shouldBe` expected
 
-    -- As of 2016-07-27, there was no reference file
-    -- for the test cases in `exercism/x-common`.
+-- As of 2016-07-27, there was no reference file
+-- for the test cases in `exercism/x-common`.
 
-    it "empty keep" $
-        keep (<10) [] `shouldBe` ([] :: [Int])
+data Case = Case { description ::       String
+                 , input       ::       String
+                 , expected    :: Maybe String
+                 }
 
-    it "keep everything" $
-        keep (<10) [1, 2, 3] `shouldBe` [1, 2, 3 :: Int]
+numberCases :: [Case]
+numberCases =
+    [ Case { description = "cleans number"
+           , input       = "(123) 456-7890"
+           , expected    = Just "1234567890"
+           }
+    , Case { description = "cleans another number"
+           , input       = "(612) 555-1212"
+           , expected    = Just "6125551212"
+           }
+    , Case { description = "cleans number with dots"
+           , input       = "123.456.7890"
+           , expected    = Just "1234567890"
+           }
+    , Case { description = "cleans another number with dots"
+           , input       = "918.765.4321"
+           , expected    = Just "9187654321"
+           }
+    , Case { description = "valid when 11 digits and first is 1"
+           , input       = "12468013579"
+           , expected    = Just "2468013579"
+           }
+    , Case { description = "invalid when 11 digits"
+           , input       = "21234567890"
+           , expected    = Nothing
+           }
+    , Case { description = "invalid when 9 digits"
+           , input       = "123456789"
+           , expected    = Nothing
+           }
+    , Case { description = "invalid when 12 digits"
+           , input       = "123456789012"
+           , expected    = Nothing
+           }
+    , Case { description = "invalid when empty"
+           , input       = ""
+           , expected    = Nothing
+           }
+    , Case { description = "invalid when no digits present"
+           , input       = " (-) "
+           , expected    = Nothing
+           }
+    , Case { description = "valid with leading characters"
+           , input       = "my number is 235 813 2134"
+           , expected    = Just "2358132134"
+           }
+    , Case { description = "valid with trailing characters"
+           , input       = "987 654 3210 - bob"
+           , expected    = Just "9876543210"
+           }
+    , Case { description = "valid amidst text and punctuation"
+           , input       = "Here it is: 415-888-0000. Thanks!"
+           , expected    = Just "4158880000"
+           }
+    ]
 
-    it "keep first and last" $
-        keep odd [1, 2, 3] `shouldBe` [1, 3 :: Int]
+areaCodeCases :: [Case]
+areaCodeCases =
+    [ Case { description = "area code"
+           , input       = "1234567890"
+           , expected    = Just "123"
+           }
+    , Case { description = "area code with parentheses"
+           , input       = "(612) 555-1212"
+           , expected    = Just "612"
+           }
+    , Case { description = "area code with leading characters"
+           , input       = "my number is 235 813 2134"
+           , expected    = Just "235"
+           }
+    , Case { description = "invalid area code"
+           , input       = " (-) "
+           , expected    = Nothing
+           }
+    ]
 
-    it "keep nothing" $
-        keep even [1, 3, 5, 7] `shouldBe` ([] :: [Int])
+prettyPrintCases :: [Case]
+prettyPrintCases =
+    [ Case { description = "pretty print"
+           , input       = "1234567890"
+           , expected    = Just "(123) 456-7890"
+           }
+    , Case { description = "pretty print with full US phone number"
+           , input       = "12345678901"
+           , expected    = Just "(234) 567-8901"
+           }
+    , Case { description = "pretty print amidst text and punctuation"
+           , input       = "Here it is: 415-888-0000. Thanks!"
+           , expected    = Just "(415) 888-0000"
+           }
+    ]
 
-    it "keep neither first nor last" $
-        keep even [1, 2, 3] `shouldBe` [2 :: Int]
 
-    it "keep strings" $
-        keep ("z" `isPrefixOf`)
-        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
-        `shouldBe`
-        ["zebra", "zombies", "zealot"]
-
-    it "empty discard" $
-        discard (< 10) [] `shouldBe` ([] :: [Int])
-
-    it "discard everything" $
-        discard (< 10) [1, 2, 3] `shouldBe` ([] :: [Int])
-
-    it "discard first and last" $
-        discard odd [1, 2, 3] `shouldBe` [2 :: Int]
-
-    it "discard nothing" $
-        discard even [1, 3, 5, 7] `shouldBe` [1, 3, 5, 7 :: Int]
-
-    it "discard neither first nor last" $
-        discard even [1, 2, 3] `shouldBe` [1, 3 :: Int]
-
-    it "discard strings" $
-        discard ("z" `isPrefixOf`)
-        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
-        `shouldBe`
-        ["apple", "banana", "cherimoya"]
-
-    it "keep non-strict" $
-        (take 1 . keep (const True))
-        ("yes" : error "keep should be lazier - don't look at list elements you don't need!")
-        `shouldBe`
-        ["yes"]
-
-    it "discard non-strict" $
-        (take 1 . discard (const False))
-        ("yes" : error "discard should be lazier - don't look at list elements you don't need!")
-        `shouldBe`
-        ["yes"]
-
+---- Strain
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "strain" $ do
+--
+--    -- As of 2016-07-27, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    it "empty keep" $
+--        keep (<10) [] `shouldBe` ([] :: [Int])
+--
+--    it "keep everything" $
+--        keep (<10) [1, 2, 3] `shouldBe` [1, 2, 3 :: Int]
+--
+--    it "keep first and last" $
+--        keep odd [1, 2, 3] `shouldBe` [1, 3 :: Int]
+--
+--    it "keep nothing" $
+--        keep even [1, 3, 5, 7] `shouldBe` ([] :: [Int])
+--
+--    it "keep neither first nor last" $
+--        keep even [1, 2, 3] `shouldBe` [2 :: Int]
+--
+--    it "keep strings" $
+--        keep ("z" `isPrefixOf`)
+--        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
+--        `shouldBe`
+--        ["zebra", "zombies", "zealot"]
+--
+--    it "empty discard" $
+--        discard (< 10) [] `shouldBe` ([] :: [Int])
+--
+--    it "discard everything" $
+--        discard (< 10) [1, 2, 3] `shouldBe` ([] :: [Int])
+--
+--    it "discard first and last" $
+--        discard odd [1, 2, 3] `shouldBe` [2 :: Int]
+--
+--    it "discard nothing" $
+--        discard even [1, 3, 5, 7] `shouldBe` [1, 3, 5, 7 :: Int]
+--
+--    it "discard neither first nor last" $
+--        discard even [1, 2, 3] `shouldBe` [1, 3 :: Int]
+--
+--    it "discard strings" $
+--        discard ("z" `isPrefixOf`)
+--        ["apple", "zebra", "banana", "zombies", "cherimoya", "zealot"]
+--        `shouldBe`
+--        ["apple", "banana", "cherimoya"]
+--
+--    it "keep non-strict" $
+--        (take 1 . keep (const True))
+--        ("yes" : error "keep should be lazier - don't look at list elements you don't need!")
+--        `shouldBe`
+--        ["yes"]
+--
+--    it "discard non-strict" $
+--        (take 1 . discard (const False))
+--        ("yes" : error "discard should be lazier - don't look at list elements you don't need!")
+--        `shouldBe`
+--        ["yes"]
+--
 ---- Leap
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
