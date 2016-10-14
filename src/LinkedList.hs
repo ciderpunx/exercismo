@@ -24,7 +24,8 @@ nil = Nil
 
 reverseLinkedList :: List a -> List a
 reverseLinkedList Nil = Nil
-reverseLinkedList (Cons a b) = append (reverseLinkedList b) (Cons a Nil)
+reverseLinkedList (Cons a b) =
+    append (reverseLinkedList b) (Cons a Nil)
 
 toList :: List a -> [a]
 toList Nil = []
@@ -34,4 +35,5 @@ toList (Cons a b) = a : toList b
 -- lists and translated between list types!)
 append Nil a = a
 append a Nil = a
-append (Cons a b) (Cons c d) = Cons a (append b (Cons c d))
+append (Cons a b) (Cons c d) =
+    Cons a (append b (Cons c d))
