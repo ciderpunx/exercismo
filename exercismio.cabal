@@ -27,6 +27,7 @@ library
                      , Leap
                      , PhoneNumber
                      , RobotSimulator
+                     , School
                      , SecretHandshake
                      , SpaceAge
                      , Strain
@@ -41,6 +42,7 @@ library
                      , split
                      , parsec
                      , digits
+                     , mtl
   default-language:    Haskell2010
 
 executable exercismio-exe
