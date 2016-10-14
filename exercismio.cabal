@@ -25,6 +25,7 @@ library
                      , DNACount
                      , Grains
                      , Leap
+                     , LinkedList
                      , PhoneNumber
                      , RobotSimulator
                      , School

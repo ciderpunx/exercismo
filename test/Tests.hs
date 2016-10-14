@@ -2,7 +2,7 @@
 -- {-# LANGUAGE RecordWildCards #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
-import Data.Foldable     (for_)
+-- import Data.Foldable     (for_)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
@@ -28,48 +28,122 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Leap (isLeapYear)
 -- import Strain (keep, discard)
 -- import PhoneNumber (areaCode, number, prettyPrint)
-import School (add, empty, grade, sorted)
+--import School (add, empty, grade, sorted)
+import LinkedList
+  ( datum
+  , fromList
+  , isNil
+  , next
+  , new
+  , nil
+  , reverseLinkedList
+  , toList
+  )
 
--- Grade School
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "grade-school" $ do
+specs = describe "simple-linked-list" $ do
 
-          -- As of 2016-07-27, there was no reference file
-          -- for the test cases in `exercism/x-common`.
+            -- As of 2016-07-27, there was no reference file
+            -- for the test cases in `exercism/x-common`.
 
-          let fromList = foldr (uncurry add) empty
-          let fromGrade g = fromList . zip (repeat g)
+            let n1   = new (1 :: Int) nil
+            let n21  = new 2 n1
+            let n321 = new 3 n21
+            let fl1  = fromList [1 :: Int]
+            let fl21 = fromList [2, 1 :: Int]
+            let r1   = reverseLinkedList n1
+            let r12  = reverseLinkedList n21
+            let r123 = reverseLinkedList n321
+            let msg  = "Should work for any type, not just Int!"
 
-          it "add student" $
-            sorted (add 2 "Aimee" empty) `shouldBe` [(2, ["Aimee"])]
+            it "constructor" $ do
+                isNil nil               `shouldBe` True
+                isNil n1                `shouldBe` False
+                datum n1                `shouldBe` 1
+                isNil (next n1)         `shouldBe` True
+                isNil n21               `shouldBe` False
+                datum n21               `shouldBe` 2
+                isNil (next n21)        `shouldBe` False
+                datum (next n21)        `shouldBe` 1
+                isNil (next $ next n21) `shouldBe` True
 
-          it "add more students in same class" $
-            sorted (fromGrade 2 ["James", "Blair", "Paul"])
-            `shouldBe` [(2, ["Blair", "James", "Paul"])]
+            it "toList" $ do
+                toList nil `shouldBe` ([] :: [Int])
+                toList n1  `shouldBe` [1]
+                toList n21 `shouldBe` [2, 1]
 
-          it "add students to different grades" $
-            sorted (fromList [(3, "Chelsea"), (7, "Logan")])
-            `shouldBe` [(3, ["Chelsea"]), (7, ["Logan"])]
+            it "fromList" $ do
+                isNil (fromList [])      `shouldBe` True
+                datum fl1                `shouldBe` 1
+                isNil (next fl1)         `shouldBe` True
+                datum fl21               `shouldBe` 2
+                datum (next fl21)        `shouldBe` 1
+                isNil (next $ next fl21) `shouldBe` True
 
-          it "get students in a grade" $
-            grade 5 (fromList [(5, "Franklin"), (5, "Bradley"), (1, "Jeff")])
-            `shouldBe` ["Bradley", "Franklin"]
+            it "reverseList" $ do
+                isNil (reverseLinkedList nil) `shouldBe` True
+                datum r1                      `shouldBe` 1
+                isNil (next r1)               `shouldBe` True
+                datum r12                     `shouldBe` 1
+                datum (next r12)              `shouldBe` 2
+                isNil (next $ next r12)       `shouldBe` True
+                datum r123                    `shouldBe` 1
+                datum (next r123)             `shouldBe` 2
+                datum (next $ next r123)      `shouldBe` 3
 
-          it "get students in a non-existent grade" $
-            grade 1 empty `shouldBe` []
+            it "roundtrip" $ do
+                (toList . fromList) []      `shouldBe` ([]      :: [Int])
+                (toList . fromList) [1]     `shouldBe` ([1]     :: [Int])
+                (toList . fromList) [1, 2]  `shouldBe` ([1, 2]  :: [Int])
+                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Int])
 
-          it "sorted school" $
-            sorted (fromList [ (4, "Jennifer"   )
-                             , (6, "Kareem"     )
-                             , (4, "Christopher")
-                             , (3, "Kyle"       ) ] )
-            `shouldBe` [ (3, ["Kyle"                   ] )
-                       , (4, ["Christopher", "Jennifer"] )
-                       , (6, ["Kareem"                 ] ) ]
+            it "has an unconstrained type variable" $ do
+                (toList . fromList) msg     `shouldBe` msg
+                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Integer])
 
+---- Grade School
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "grade-school" $ do
+--
+--          -- As of 2016-07-27, there was no reference file
+--          -- for the test cases in `exercism/x-common`.
+--
+--          let fromList = foldr (uncurry add) empty
+--          let fromGrade g = fromList . zip (repeat g)
+--
+--          it "add student" $
+--            sorted (add 2 "Aimee" empty) `shouldBe` [(2, ["Aimee"])]
+--
+--          it "add more students in same class" $
+--            sorted (fromGrade 2 ["James", "Blair", "Paul"])
+--            `shouldBe` [(2, ["Blair", "James", "Paul"])]
+--
+--          it "add students to different grades" $
+--            sorted (fromList [(3, "Chelsea"), (7, "Logan")])
+--            `shouldBe` [(3, ["Chelsea"]), (7, ["Logan"])]
+--
+--          it "get students in a grade" $
+--            grade 5 (fromList [(5, "Franklin"), (5, "Bradley"), (1, "Jeff")])
+--            `shouldBe` ["Bradley", "Franklin"]
+--
+--          it "get students in a non-existent grade" $
+--            grade 1 empty `shouldBe` []
+--
+--          it "sorted school" $
+--            sorted (fromList [ (4, "Jennifer"   )
+--                             , (6, "Kareem"     )
+--                             , (4, "Christopher")
+--                             , (3, "Kyle"       ) ] )
+--            `shouldBe` [ (3, ["Kyle"                   ] )
+--                       , (4, ["Christopher", "Jennifer"] )
+--                       , (6, ["Kareem"                 ] ) ]
+--
 ---- PhoneNumber
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
