@@ -1,9 +1,9 @@
 -- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
--- {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
--- import Data.Foldable     (for_)
+import Data.Foldable     (for_)
 --import Control.Exception (Exception, throw, evaluate)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldThrow, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
@@ -59,54 +59,126 @@ import Data.Map          (fromList)
 --    , map
 --    , reverse
 --    )
-import Etl (transform)
+--import Etl (transform)
+import Scrabble (scoreLetter, scoreWord)
 
--- ETL
+-- Scrabble
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "etl" $
-
-  -- As of 2016-07-27, there was no reference file
-  -- for the test cases in `exercism/x-common`.
-
-  describe "transform" $ do
-
-    it "transform one value" $
-      transform (fromList [(1, "A")])
-      `shouldBe` fromList [('a', 1)]
-
-    it "transform multiple keys from one value" $
-      transform (fromList [(1, "AE")])
-      `shouldBe` fromList [('a', 1), ('e', 1)]
-
-    it "transform multiple keys from multiple values" $
-      transform (fromList [(1, "A"), (4, "B")])
-      `shouldBe` fromList [('a', 1), ('b', 4)]
-
-    it "full dataset" $
-      transform (fromList fullInput)
-      `shouldBe` fromList fullOutput
-
+specs = describe "scrabble-score" $ do
+          describe "scoreLetter" $ do
+            it "'a'" $ scoreLetter 'a' `shouldBe`  1
+            it "'Z'" $ scoreLetter 'Z' `shouldBe` 10
+            it "'?'" $ scoreLetter '?' `shouldBe`  0
+          describe "scoreWord" $ for_ cases test
   where
 
-    fullInput = [ ( 1, "AEIOULNRST")
-                , ( 2, "DG"        )
-                , ( 3, "BCMP"      )
-                , ( 4, "FHVWY"     )
-                , ( 5, "K"         )
-                , ( 8, "JX"        )
-                , (10, "QZ"        ) ]
+    test Case{..} = it description assertion
+      where
+        assertion = scoreWord input `shouldBe` fromIntegral expected
 
-    fullOutput = [ ('a',  1) , ('b',  3) , ('c',  3) , ('d',  2)
-                 , ('e',  1) , ('f',  4) , ('g',  2) , ('h',  4)
-                 , ('i',  1) , ('j',  8) , ('k',  5) , ('l',  1)
-                 , ('m',  3) , ('n',  1) , ('o',  1) , ('p',  3)
-                 , ('q', 10) , ('r',  1) , ('s',  1) , ('t',  1)
-                 , ('u',  1) , ('v',  4) , ('w',  4) , ('x',  8)
-                 , ('y',  4) , ('z', 10) ]
+-- Test cases adapted from `exercism/x-common/scrabble-score.json` on 2016-07-26.
 
+data Case = Case { description :: String
+                 , input       :: String
+                 , expected    :: Integer
+                 }
+
+cases :: [Case]
+cases = [ Case { description = "lowercase letter"
+               , input       = "a"
+               , expected    = 1
+               }
+        , Case { description = "uppercase letter"
+               , input       = "A"
+               , expected    = 1
+               }
+        , Case { description = "valuable letter"
+               , input       = "f"
+               , expected    = 4
+               }
+        , Case { description = "short word"
+               , input       = "at"
+               , expected    = 2
+               }
+        , Case { description = "short, valuable word"
+               , input       = "zoo"
+               , expected    = 12
+               }
+        , Case { description = "medium word"
+               , input       = "street"
+               , expected    = 6
+               }
+        , Case { description = "medium, valuable word"
+               , input       = "quirky"
+               , expected    = 22
+               }
+        , Case { description = "long, mixed-case word"
+               , input       = "OxyphenButazone"
+               , expected    = 41
+               }
+        , Case { description = "english-like word"
+               , input       = "pinata"
+               , expected    = 8
+               }
+        , Case { description = "non-english letter is not scored"
+               , input       = "piñata"
+               , expected    = 7
+               }
+        , Case { description = "empty input"
+               , input       = ""
+               , expected    = 0
+               }
+        ]
+
+---- ETL
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "etl" $
+--
+--  -- As of 2016-07-27, there was no reference file
+--  -- for the test cases in `exercism/x-common`.
+--
+--  describe "transform" $ do
+--
+--    it "transform one value" $
+--      transform (fromList [(1, "A")])
+--      `shouldBe` fromList [('a', 1)]
+--
+--    it "transform multiple keys from one value" $
+--      transform (fromList [(1, "AE")])
+--      `shouldBe` fromList [('a', 1), ('e', 1)]
+--
+--    it "transform multiple keys from multiple values" $
+--      transform (fromList [(1, "A"), (4, "B")])
+--      `shouldBe` fromList [('a', 1), ('b', 4)]
+--
+--    it "full dataset" $
+--      transform (fromList fullInput)
+--      `shouldBe` fromList fullOutput
+--
+--  where
+--
+--    fullInput = [ ( 1, "AEIOULNRST")
+--                , ( 2, "DG"        )
+--                , ( 3, "BCMP"      )
+--                , ( 4, "FHVWY"     )
+--                , ( 5, "K"         )
+--                , ( 8, "JX"        )
+--                , (10, "QZ"        ) ]
+--
+--    fullOutput = [ ('a',  1) , ('b',  3) , ('c',  3) , ('d',  2)
+--                 , ('e',  1) , ('f',  4) , ('g',  2) , ('h',  4)
+--                 , ('i',  1) , ('j',  8) , ('k',  5) , ('l',  1)
+--                 , ('m',  3) , ('n',  1) , ('o',  1) , ('p',  3)
+--                 , ('q', 10) , ('r',  1) , ('s',  1) , ('t',  1)
+--                 , ('u',  1) , ('v',  4) , ('w',  4) , ('x',  8)
+--                 , ('y',  4) , ('z', 10) ]
+--
 ---- ListOps
 --data StrictException = StrictException deriving (Eq, Show, Exception)
 --
