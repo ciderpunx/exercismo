@@ -23,9 +23,11 @@ library
                      , Bob
                      , DNA
                      , DNACount
+                     , Etl
                      , Grains
                      , Leap
                      , LinkedList
+                     , ListOps
                      , PhoneNumber
                      , RobotSimulator
                      , School

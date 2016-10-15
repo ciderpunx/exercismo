@@ -1,12 +1,14 @@
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+-- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 -- {-# LANGUAGE RecordWildCards #-}
+-- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
 -- import Data.Foldable     (for_)
-import Test.Hspec        (Spec, describe, it, shouldBe, shouldSatisfy)
+--import Control.Exception (Exception, throw, evaluate)
+import Test.Hspec        (Spec, describe, it, shouldBe, shouldThrow, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
--- import Data.Map          (fromList)
+import Data.Map          (fromList)
 --import Data.List (isPrefixOf)
 --import Anagram (anagramsFor)
 --import Beer (sing, verse)
@@ -29,81 +31,237 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Strain (keep, discard)
 -- import PhoneNumber (areaCode, number, prettyPrint)
 --import School (add, empty, grade, sorted)
-import LinkedList
-  ( datum
-  , fromList
-  , isNil
-  , next
-  , new
-  , nil
-  , reverseLinkedList
-  , toList
-  )
+--import LinkedList
+--  ( datum
+--  , fromList
+--  , isNil
+--  , next
+--  , new
+--  , nil
+--  , reverseLinkedList
+--  , toList
+--  )
+--import Prelude hiding
+--    ( (++)
+--    , concat
+--    , foldr
+--    , length
+--    , map
+--    , reverse
+--    )
+--
+--import ListOps
+--    ( (++)
+--    , concat
+--    , foldl'
+--    , foldr
+--    , length
+--    , map
+--    , reverse
+--    )
+import Etl (transform)
 
+-- ETL
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "simple-linked-list" $ do
+specs = describe "etl" $
 
-            -- As of 2016-07-27, there was no reference file
-            -- for the test cases in `exercism/x-common`.
+  -- As of 2016-07-27, there was no reference file
+  -- for the test cases in `exercism/x-common`.
 
-            let n1   = new (1 :: Int) nil
-            let n21  = new 2 n1
-            let n321 = new 3 n21
-            let fl1  = fromList [1 :: Int]
-            let fl21 = fromList [2, 1 :: Int]
-            let r1   = reverseLinkedList n1
-            let r12  = reverseLinkedList n21
-            let r123 = reverseLinkedList n321
-            let msg  = "Should work for any type, not just Int!"
+  describe "transform" $ do
 
-            it "constructor" $ do
-                isNil nil               `shouldBe` True
-                isNil n1                `shouldBe` False
-                datum n1                `shouldBe` 1
-                isNil (next n1)         `shouldBe` True
-                isNil n21               `shouldBe` False
-                datum n21               `shouldBe` 2
-                isNil (next n21)        `shouldBe` False
-                datum (next n21)        `shouldBe` 1
-                isNil (next $ next n21) `shouldBe` True
+    it "transform one value" $
+      transform (fromList [(1, "A")])
+      `shouldBe` fromList [('a', 1)]
 
-            it "toList" $ do
-                toList nil `shouldBe` ([] :: [Int])
-                toList n1  `shouldBe` [1]
-                toList n21 `shouldBe` [2, 1]
+    it "transform multiple keys from one value" $
+      transform (fromList [(1, "AE")])
+      `shouldBe` fromList [('a', 1), ('e', 1)]
 
-            it "fromList" $ do
-                isNil (fromList [])      `shouldBe` True
-                datum fl1                `shouldBe` 1
-                isNil (next fl1)         `shouldBe` True
-                datum fl21               `shouldBe` 2
-                datum (next fl21)        `shouldBe` 1
-                isNil (next $ next fl21) `shouldBe` True
+    it "transform multiple keys from multiple values" $
+      transform (fromList [(1, "A"), (4, "B")])
+      `shouldBe` fromList [('a', 1), ('b', 4)]
 
-            it "reverseList" $ do
-                isNil (reverseLinkedList nil) `shouldBe` True
-                datum r1                      `shouldBe` 1
-                isNil (next r1)               `shouldBe` True
-                datum r12                     `shouldBe` 1
-                datum (next r12)              `shouldBe` 2
-                isNil (next $ next r12)       `shouldBe` True
-                datum r123                    `shouldBe` 1
-                datum (next r123)             `shouldBe` 2
-                datum (next $ next r123)      `shouldBe` 3
+    it "full dataset" $
+      transform (fromList fullInput)
+      `shouldBe` fromList fullOutput
 
-            it "roundtrip" $ do
-                (toList . fromList) []      `shouldBe` ([]      :: [Int])
-                (toList . fromList) [1]     `shouldBe` ([1]     :: [Int])
-                (toList . fromList) [1, 2]  `shouldBe` ([1, 2]  :: [Int])
-                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Int])
+  where
 
-            it "has an unconstrained type variable" $ do
-                (toList . fromList) msg     `shouldBe` msg
-                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Integer])
+    fullInput = [ ( 1, "AEIOULNRST")
+                , ( 2, "DG"        )
+                , ( 3, "BCMP"      )
+                , ( 4, "FHVWY"     )
+                , ( 5, "K"         )
+                , ( 8, "JX"        )
+                , (10, "QZ"        ) ]
 
+    fullOutput = [ ('a',  1) , ('b',  3) , ('c',  3) , ('d',  2)
+                 , ('e',  1) , ('f',  4) , ('g',  2) , ('h',  4)
+                 , ('i',  1) , ('j',  8) , ('k',  5) , ('l',  1)
+                 , ('m',  3) , ('n',  1) , ('o',  1) , ('p',  3)
+                 , ('q', 10) , ('r',  1) , ('s',  1) , ('t',  1)
+                 , ('u',  1) , ('v',  4) , ('w',  4) , ('x',  8)
+                 , ('y',  4) , ('z', 10) ]
+
+---- ListOps
+--data StrictException = StrictException deriving (Eq, Show, Exception)
+--
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "list-ops" $ do
+--
+--    -- As of 2016-07-27, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    let big = 100000 :: Int
+--
+--    it "length of empty list" $
+--      length ([] :: [Int]) `shouldBe` 0
+--
+--    it "length of non-empty list" $
+--      length [1 .. 4 :: Int] `shouldBe` 4
+--
+--    it "length of large list" $
+--      length [1 .. big :: Int] `shouldBe` big
+--
+--    it "reverse of empty list" $
+--      reverse ([] :: [Int]) `shouldBe` []
+--
+--    it "reverse of non-empty list" $
+--      reverse [1 .. 100 :: Int] `shouldBe` [100 , 99 .. 1]
+--
+--    it "map of empty list" $
+--      map (+1) ([] :: [Int]) `shouldBe` []
+--
+--    it "map of non-empty list" $
+--      map (+1) [1, 3 .. 7 :: Int] `shouldBe` [2, 4 .. 8]
+--
+--    it "filter of empty list" $
+--      filter undefined ([] :: [Int]) `shouldBe` []
+--
+--    it "filter of normal list" $
+--      filter odd [1 .. 4 :: Int] `shouldBe` [1, 3]
+--
+--    it "foldl' of empty list" $
+--      foldl' (+) (0 :: Int) [] `shouldBe` 0
+--
+--    it "foldl' of non-empty list" $
+--      foldl' (+) (-3) [1 .. 4 :: Int] `shouldBe` 7
+--
+--    it "foldl' of huge list" $
+--      foldl' (+) 0 [1 .. big] `shouldBe` big * (big + 1) `div` 2
+--
+--    it "foldl' with non-commutative function" $
+--      foldl' (-) 10 [1 .. 4 :: Int] `shouldBe` 0
+--
+--    it "foldl' is not just foldr . flip" $
+--      foldl' (flip (:)) [] "asdf" `shouldBe` "fdsa"
+--
+--    it "foldl' is accumulator-strict (use seq or BangPatterns)" $
+--      evaluate (foldl' (flip const) () [throw StrictException, ()])
+--      `shouldThrow` (== StrictException)
+--
+--    it "foldr as id" $
+--      foldr (:) [] [1 .. big] `shouldBe` [1 .. big]
+--
+--    it "foldr as append" $
+--      foldr (:) [100 .. big] [1 .. 99] `shouldBe` [1 .. big]
+--
+--    it "++ of empty lists" $
+--      [] ++ ([] :: [Int]) `shouldBe` []
+--
+--    it "++ of empty and non-empty lists" $
+--      [] ++ [1 .. 4 :: Int] `shouldBe` [1 .. 4]
+--
+--    it "++ of non-empty and empty lists" $
+--      [1 .. 4 :: Int] ++ [] `shouldBe` [1 .. 4]
+--
+--    it "++ of non-empty lists" $
+--      [1 .. 3] ++ [4, 5 :: Int] `shouldBe` [1 .. 5]
+--
+--    it "++ of large lists" $
+--      [1 .. big `div` 2] ++ [1 + big `div` 2 .. big] `shouldBe` [1 .. big]
+--
+--    it "concat of no lists" $
+--      concat ([] :: [[Int]]) `shouldBe` []
+--
+--    it "concat of list of lists" $
+--      concat [[1, 2], [3], [], [4, 5, 6 :: Int]] `shouldBe` [1 .. 6]
+--
+--    it "concat of large list of small lists" $
+--      concat (map (:[]) [1 .. big]) `shouldBe` [1 .. big]
+--
+-- LinkedList
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "simple-linked-list" $ do
+--
+--            -- As of 2016-07-27, there was no reference file
+--            -- for the test cases in `exercism/x-common`.
+--
+--            let n1   = new (1 :: Int) nil
+--            let n21  = new 2 n1
+--            let n321 = new 3 n21
+--            let fl1  = fromList [1 :: Int]
+--            let fl21 = fromList [2, 1 :: Int]
+--            let r1   = reverseLinkedList n1
+--            let r12  = reverseLinkedList n21
+--            let r123 = reverseLinkedList n321
+--            let msg  = "Should work for any type, not just Int!"
+--
+--            it "constructor" $ do
+--                isNil nil               `shouldBe` True
+--                isNil n1                `shouldBe` False
+--                datum n1                `shouldBe` 1
+--                isNil (next n1)         `shouldBe` True
+--                isNil n21               `shouldBe` False
+--                datum n21               `shouldBe` 2
+--                isNil (next n21)        `shouldBe` False
+--                datum (next n21)        `shouldBe` 1
+--                isNil (next $ next n21) `shouldBe` True
+--
+--            it "toList" $ do
+--                toList nil `shouldBe` ([] :: [Int])
+--                toList n1  `shouldBe` [1]
+--                toList n21 `shouldBe` [2, 1]
+--
+--            it "fromList" $ do
+--                isNil (fromList [])      `shouldBe` True
+--                datum fl1                `shouldBe` 1
+--                isNil (next fl1)         `shouldBe` True
+--                datum fl21               `shouldBe` 2
+--                datum (next fl21)        `shouldBe` 1
+--                isNil (next $ next fl21) `shouldBe` True
+--
+--            it "reverseList" $ do
+--                isNil (reverseLinkedList nil) `shouldBe` True
+--                datum r1                      `shouldBe` 1
+--                isNil (next r1)               `shouldBe` True
+--                datum r12                     `shouldBe` 1
+--                datum (next r12)              `shouldBe` 2
+--                isNil (next $ next r12)       `shouldBe` True
+--                datum r123                    `shouldBe` 1
+--                datum (next r123)             `shouldBe` 2
+--                datum (next $ next r123)      `shouldBe` 3
+--
+--            it "roundtrip" $ do
+--                (toList . fromList) []      `shouldBe` ([]      :: [Int])
+--                (toList . fromList) [1]     `shouldBe` ([1]     :: [Int])
+--                (toList . fromList) [1, 2]  `shouldBe` ([1, 2]  :: [Int])
+--                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Int])
+--
+--            it "has an unconstrained type variable" $ do
+--                (toList . fromList) msg     `shouldBe` msg
+--                (toList . fromList) [1..10] `shouldBe` ([1..10] :: [Integer])
+--
 ---- Grade School
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
