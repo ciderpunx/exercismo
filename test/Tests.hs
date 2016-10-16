@@ -1,5 +1,5 @@
--- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+-- {-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
@@ -8,7 +8,7 @@ import Data.Foldable     (for_)
 import Test.Hspec        (Spec, describe, it, shouldBe, shouldThrow, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
-import Data.Map          (fromList)
+--import Data.Map          (fromList)
 --import Data.List (isPrefixOf)
 --import Anagram (anagramsFor)
 --import Beer (sing, verse)
@@ -60,79 +60,155 @@ import Data.Map          (fromList)
 --    , reverse
 --    )
 --import Etl (transform)
-import Scrabble (scoreLetter, scoreWord)
+--import Scrabble (scoreLetter, scoreWord)
+import Triangle
+  ( TriangleType ( Equilateral
+                 , Illegal
+                 , Isosceles
+                 , Scalene
+                 )
+  , triangleType
+  )
 
--- Scrabble
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "scrabble-score" $ do
-          describe "scoreLetter" $ do
-            it "'a'" $ scoreLetter 'a' `shouldBe`  1
-            it "'Z'" $ scoreLetter 'Z' `shouldBe` 10
-            it "'?'" $ scoreLetter '?' `shouldBe`  0
-          describe "scoreWord" $ for_ cases test
+specs = describe "triangle" $
+          describe "triangleType" $ for_ cases test
   where
 
-    test Case{..} = it description assertion
+    test (description, (a, b, c), expected) = it description assertion
       where
-        assertion = scoreWord input `shouldBe` fromIntegral expected
+        assertion = triangleType a b c `shouldBe` expected
 
--- Test cases adapted from `exercism/x-common/scrabble-score.json` on 2016-07-26.
+    -- Test cases adapted from `exercism/x-common/triangle.json` on 2016-08-03.
 
-data Case = Case { description :: String
-                 , input       :: String
-                 , expected    :: Integer
-                 }
+    cases = [ ( "equilateral triangle has all sides equal"
+              , (2, 2, 2)
+              , Equilateral
+              )
+            , ( "larger equilateral triangle"
+              , (10, 10, 10)
+              , Equilateral
+              )
+            , ( "isosceles triangle with last two sides equal"
+              , (3, 4, 4)
+              , Isosceles
+              )
+            , ( "isosceles triangle with first two sides equal"
+              , (4, 4, 3)
+              , Isosceles
+              )
+            , ( "isosceles triangle with first and last sides equal"
+              , (4, 3, 4)
+              , Isosceles
+              )
+            , ( "isosceles triangle with unequal side larger than equal sides"
+              , (4, 7, 4)
+              , Isosceles
+              )
+            , ( "scalene triangle has no equal sides"
+              , (3, 4, 5)
+              , Scalene
+              )
+            , ( "larger scalene triangle"
+              , (10, 11, 12)
+              , Scalene
+              )
+            , ( "scalene triangle with sides in descending order"
+              , (5, 4, 2)
+              , Scalene
+              )
+            , ( "small scalene triangle with floating point values"
+              , (0.4, 0.6, 0.3)
+              , Scalene
+              )
+            , ( "a triangle violating the triangle inequality is illegal"
+              , (7, 3, 2)
+              , Illegal
+              )
+            , ( "two sides equal, but still violates triangle inequality"
+              , (1, 1, 3)
+              , Illegal
+              )
+            , ( "triangles with all sides zero are illegal"
+              , (0, 0, 0)
+              , Illegal
+              )
+            ]
 
-cases :: [Case]
-cases = [ Case { description = "lowercase letter"
-               , input       = "a"
-               , expected    = 1
-               }
-        , Case { description = "uppercase letter"
-               , input       = "A"
-               , expected    = 1
-               }
-        , Case { description = "valuable letter"
-               , input       = "f"
-               , expected    = 4
-               }
-        , Case { description = "short word"
-               , input       = "at"
-               , expected    = 2
-               }
-        , Case { description = "short, valuable word"
-               , input       = "zoo"
-               , expected    = 12
-               }
-        , Case { description = "medium word"
-               , input       = "street"
-               , expected    = 6
-               }
-        , Case { description = "medium, valuable word"
-               , input       = "quirky"
-               , expected    = 22
-               }
-        , Case { description = "long, mixed-case word"
-               , input       = "OxyphenButazone"
-               , expected    = 41
-               }
-        , Case { description = "english-like word"
-               , input       = "pinata"
-               , expected    = 8
-               }
-        , Case { description = "non-english letter is not scored"
-               , input       = "piñata"
-               , expected    = 7
-               }
-        , Case { description = "empty input"
-               , input       = ""
-               , expected    = 0
-               }
-        ]
-
+---- Scrabble
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "scrabble-score" $ do
+--          describe "scoreLetter" $ do
+--            it "'a'" $ scoreLetter 'a' `shouldBe`  1
+--            it "'Z'" $ scoreLetter 'Z' `shouldBe` 10
+--            it "'?'" $ scoreLetter '?' `shouldBe`  0
+--          describe "scoreWord" $ for_ cases test
+--  where
+--
+--    test Case{..} = it description assertion
+--      where
+--        assertion = scoreWord input `shouldBe` fromIntegral expected
+--
+---- Test cases adapted from `exercism/x-common/scrabble-score.json` on 2016-07-26.
+--
+--data Case = Case { description :: String
+--                 , input       :: String
+--                 , expected    :: Integer
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "lowercase letter"
+--               , input       = "a"
+--               , expected    = 1
+--               }
+--        , Case { description = "uppercase letter"
+--               , input       = "A"
+--               , expected    = 1
+--               }
+--        , Case { description = "valuable letter"
+--               , input       = "f"
+--               , expected    = 4
+--               }
+--        , Case { description = "short word"
+--               , input       = "at"
+--               , expected    = 2
+--               }
+--        , Case { description = "short, valuable word"
+--               , input       = "zoo"
+--               , expected    = 12
+--               }
+--        , Case { description = "medium word"
+--               , input       = "street"
+--               , expected    = 6
+--               }
+--        , Case { description = "medium, valuable word"
+--               , input       = "quirky"
+--               , expected    = 22
+--               }
+--        , Case { description = "long, mixed-case word"
+--               , input       = "OxyphenButazone"
+--               , expected    = 41
+--               }
+--        , Case { description = "english-like word"
+--               , input       = "pinata"
+--               , expected    = 8
+--               }
+--        , Case { description = "non-english letter is not scored"
+--               , input       = "piñata"
+--               , expected    = 7
+--               }
+--        , Case { description = "empty input"
+--               , input       = ""
+--               , expected    = 0
+--               }
+--        ]
+--
 ---- ETL
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs

@@ -37,6 +37,7 @@ library
                      , Strain
                      , Sublist
                      , SumOfMultiples
+                     , Triangle
                      , WordCount
                      , WordSquare
                      , Wordy
