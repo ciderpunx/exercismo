@@ -61,83 +61,119 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --    )
 --import Etl (transform)
 --import Scrabble (scoreLetter, scoreWord)
-import Triangle
-  ( TriangleType ( Equilateral
-                 , Illegal
-                 , Isosceles
-                 , Scalene
-                 )
-  , triangleType
-  )
+--import Triangle
+--  ( TriangleType ( Equilateral
+--                 , Illegal
+--                 , Isosceles
+--                 , Scalene
+--                 )
+--  , triangleType
+--  )
+import Raindrops (convert)
+
 
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "triangle" $
-          describe "triangleType" $ for_ cases test
+specs = describe "raindrops" $
+          describe "convert" $ for_ cases test
   where
-
-    test (description, (a, b, c), expected) = it description assertion
+    test (number, expected) = it description assertion
       where
-        assertion = triangleType a b c `shouldBe` expected
+        description = show number
+        assertion   = convert number `shouldBe` expected
 
-    -- Test cases adapted from `exercism/x-common/triangle.json` on 2016-08-03.
+    -- Test cases adapted from `exercism/x-common` on 2016-09-19.
 
-    cases = [ ( "equilateral triangle has all sides equal"
-              , (2, 2, 2)
-              , Equilateral
-              )
-            , ( "larger equilateral triangle"
-              , (10, 10, 10)
-              , Equilateral
-              )
-            , ( "isosceles triangle with last two sides equal"
-              , (3, 4, 4)
-              , Isosceles
-              )
-            , ( "isosceles triangle with first two sides equal"
-              , (4, 4, 3)
-              , Isosceles
-              )
-            , ( "isosceles triangle with first and last sides equal"
-              , (4, 3, 4)
-              , Isosceles
-              )
-            , ( "isosceles triangle with unequal side larger than equal sides"
-              , (4, 7, 4)
-              , Isosceles
-              )
-            , ( "scalene triangle has no equal sides"
-              , (3, 4, 5)
-              , Scalene
-              )
-            , ( "larger scalene triangle"
-              , (10, 11, 12)
-              , Scalene
-              )
-            , ( "scalene triangle with sides in descending order"
-              , (5, 4, 2)
-              , Scalene
-              )
-            , ( "small scalene triangle with floating point values"
-              , (0.4, 0.6, 0.3)
-              , Scalene
-              )
-            , ( "a triangle violating the triangle inequality is illegal"
-              , (7, 3, 2)
-              , Illegal
-              )
-            , ( "two sides equal, but still violates triangle inequality"
-              , (1, 1, 3)
-              , Illegal
-              )
-            , ( "triangles with all sides zero are illegal"
-              , (0, 0, 0)
-              , Illegal
-              )
-            ]
+    cases = [ (   1, "1"              )
+            , (   3, "Pling"          )
+            , (   5, "Plang"          )
+            , (   7, "Plong"          )
+            , (   6, "Pling"          )
+            , (   8, "8"              )
+            , (   9, "Pling"          )
+            , (  10, "Plang"          )
+            , (  14, "Plong"          )
+            , (  15, "PlingPlang"     )
+            , (  21, "PlingPlong"     )
+            , (  25, "Plang"          )
+            , (  27, "Pling"          )
+            , (  35, "PlangPlong"     )
+            , (  49, "Plong"          )
+            , (  52, "52"             )
+            , ( 105, "PlingPlangPlong")
+            , (3125, "Plang"          ) ]
 
+--
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "triangle" $
+--          describe "triangleType" $ for_ cases test
+--  where
+--
+--    test (description, (a, b, c), expected) = it description assertion
+--      where
+--        assertion = triangleType a b c `shouldBe` expected
+--
+--    -- Test cases adapted from `exercism/x-common/triangle.json` on 2016-08-03.
+--
+--    cases = [ ( "equilateral triangle has all sides equal"
+--              , (2, 2, 2)
+--              , Equilateral
+--              )
+--            , ( "larger equilateral triangle"
+--              , (10, 10, 10)
+--              , Equilateral
+--              )
+--            , ( "isosceles triangle with last two sides equal"
+--              , (3, 4, 4)
+--              , Isosceles
+--              )
+--            , ( "isosceles triangle with first two sides equal"
+--              , (4, 4, 3)
+--              , Isosceles
+--              )
+--            , ( "isosceles triangle with first and last sides equal"
+--              , (4, 3, 4)
+--              , Isosceles
+--              )
+--            , ( "isosceles triangle with unequal side larger than equal sides"
+--              , (4, 7, 4)
+--              , Isosceles
+--              )
+--            , ( "scalene triangle has no equal sides"
+--              , (3, 4, 5)
+--              , Scalene
+--              )
+--            , ( "larger scalene triangle"
+--              , (10, 11, 12)
+--              , Scalene
+--              )
+--            , ( "scalene triangle with sides in descending order"
+--              , (5, 4, 2)
+--              , Scalene
+--              )
+--            , ( "small scalene triangle with floating point values"
+--              , (0.4, 0.6, 0.3)
+--              , Scalene
+--              )
+--            , ( "a triangle violating the triangle inequality is illegal"
+--              , (7, 3, 2)
+--              , Illegal
+--              )
+--            , ( "two sides equal, but still violates triangle inequality"
+--              , (1, 1, 3)
+--              , Illegal
+--              )
+--            , ( "triangles with all sides zero are illegal"
+--              , (0, 0, 0)
+--              , Illegal
+--              )
+--            ]
+--
 ---- Scrabble
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
