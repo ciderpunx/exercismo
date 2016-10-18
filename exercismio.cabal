@@ -29,6 +29,7 @@ library
                      , LinkedList
                      , ListOps
                      , PhoneNumber
+                     , PrimeFactors
                      , Raindrops
                      , RobotSimulator
                      , School

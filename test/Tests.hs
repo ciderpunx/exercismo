@@ -69,42 +69,73 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --                 )
 --  , triangleType
 --  )
-import Raindrops (convert)
+--import Raindrops (convert)
+import PrimeFactors (primeFactors)
 
-
+-- Prime factors
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "raindrops" $
-          describe "convert" $ for_ cases test
+specs = describe "prime-factors" $
+          describe "primeFactors" $ for_ cases test
   where
-    test (number, expected) = it description assertion
+
+    test (n, expected) = it explanation assertion
       where
-        description = show number
-        assertion   = convert number `shouldBe` expected
+        explanation = show n
+        assertion   = primeFactors n `shouldBe` expected
 
-    -- Test cases adapted from `exercism/x-common` on 2016-09-19.
+    -- As of 2016-07-31, there was no reference file
+    -- for the test cases in `exercism/x-common`.
 
-    cases = [ (   1, "1"              )
-            , (   3, "Pling"          )
-            , (   5, "Plang"          )
-            , (   7, "Plong"          )
-            , (   6, "Pling"          )
-            , (   8, "8"              )
-            , (   9, "Pling"          )
-            , (  10, "Plang"          )
-            , (  14, "Plong"          )
-            , (  15, "PlingPlang"     )
-            , (  21, "PlingPlong"     )
-            , (  25, "Plang"          )
-            , (  27, "Pling"          )
-            , (  35, "PlangPlong"     )
-            , (  49, "Plong"          )
-            , (  52, "52"             )
-            , ( 105, "PlingPlangPlong")
-            , (3125, "Plang"          ) ]
+    cases = [ (          1,                 [] )
+            , (          2,                [2] )
+            , (          3,                [3] )
+            , (          4,             [2, 2] )
+            , (          6,             [2, 3] )
+            , (          8,          [2, 2, 2] )
+            , (          9,             [3, 3] )
+            , (         27,          [3, 3, 3] )
+            , (        625,       [5, 5, 5, 5] )
+            , (     901255,   [5, 17, 23, 461] )
+            , (93819012551, [11, 9539, 894119] ) ]
 
+
+----Raindrops
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "raindrops" $
+--          describe "convert" $ for_ cases test
+--  where
+--    test (number, expected) = it description assertion
+--      where
+--        description = show number
+--        assertion   = convert number `shouldBe` expected
+--
+--    -- Test cases adapted from `exercism/x-common` on 2016-09-19.
+--
+--    cases = [ (   1, "1"              )
+--            , (   3, "Pling"          )
+--            , (   5, "Plang"          )
+--            , (   7, "Plong"          )
+--            , (   6, "Pling"          )
+--            , (   8, "8"              )
+--            , (   9, "Pling"          )
+--            , (  10, "Plang"          )
+--            , (  14, "Plong"          )
+--            , (  15, "PlingPlang"     )
+--            , (  21, "PlingPlong"     )
+--            , (  25, "Plang"          )
+--            , (  27, "Pling"          )
+--            , (  35, "PlangPlong"     )
+--            , (  49, "Plong"          )
+--            , (  52, "52"             )
+--            , ( 105, "PlingPlangPlong")
+--            , (3125, "Plang"          ) ]
+--
 --
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
