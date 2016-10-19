@@ -35,6 +35,7 @@ library
                      , School
                      , Scrabble
                      , SecretHandshake
+                     , Series
                      , SpaceAge
                      , Strain
                      , Sublist
