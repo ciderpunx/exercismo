@@ -1,17 +1,27 @@
 module Allergies where
+import Data.Digits (digitsRev)
 
 data Allergen = Eggs
               | Peanuts
               | Shellfish
               | Strawberries
-              | Tomatoes 
+              | Tomatoes
               | Chocolate
               | Pollen
               | Cats
               deriving (Show,Eq)
 
-powersOfTwo :: [Integer]
-powersOfTwo = map (2^) [0..]
+isAllergicTo :: Allergen -> Integer -> Bool
+isAllergicTo allergen score =
+    allergen `elem` allergies score
+
+-- Convert to binary digits and zip with the list of constructors
+-- where there's a 1 that constructor should be in the returned value
+-- otherwise there shouldn't be. Can be expressed as a fold, but this
+-- is shorter.
+allergies :: Integer -> [Allergen]
+allergies n =
+    map snd . filter ((==1) . fst) $ zip (digitsRev 2 n) allergenConstructors
 
 allergenConstructors :: [Allergen]
 allergenConstructors =
@@ -24,23 +34,3 @@ allergenConstructors =
               , Pollen
               , Cats
               ]
-
-allergenLookup :: [(Integer, Allergen)]
-allergenLookup =
-    reverse $ zip powersOfTwo allergenConstructors 
-
-allergies :: Integer -> [Allergen]
-allergies = allergies' allergenLookup
-
--- I feel like this could be reduced to a fold. Another day.
-allergies' :: [(Integer, Allergen)] -> Integer -> [Allergen]
-allergies' _  0       = []
-allergies' [] acc     = []
-allergies' (x:xs) acc =
-    if acc - fst x >= 0 
-    then snd x : allergies' xs (acc - fst x)
-    else allergies' xs acc
-
-isAllergicTo :: Allergen -> Integer -> Bool
-isAllergicTo allergen score =
-    allergen `elem` allergies score
