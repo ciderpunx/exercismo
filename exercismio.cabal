@@ -31,6 +31,7 @@ library
                      , ListOps
                      , PhoneNumber
                      , PrimeFactors
+                     , Prime
                      , Raindrops
                      , RobotSimulator
                      , School
