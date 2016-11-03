@@ -43,6 +43,7 @@ library
                      , Sublist
                      , SumOfMultiples
                      , Triangle
+                     , Triplet
                      , WordCount
                      , WordSquare
                      , Wordy

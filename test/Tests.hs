@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# LANGUAGE RecordWildCards #-}
+-- {-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
@@ -85,50 +85,88 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , allergies
 --  , isAllergicTo
 --  )
-import Prime (nth)
+--import Prime (nth)
+import Triplet (isPythagorean, mkTriplet, pythagoreanTriplets)
 
--- Primes
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "nth-prime" $
-          describe "nth" $ for_ cases test
+specs = describe "pythagorean-triplet" $ do
+          describe "isPythagorean"       $ for_ isPythagoreanCases       isPythagoreanTest
+          describe "pythagoreanTriplets" $ for_ pythagoreanTripletsCases pythagoreanTripletsTest
   where
 
-    test Case{..} = it description assertion
+    isPythagoreanTest ((a, b, c), expected) = it description assertion
       where
-        assertion = nth (fromIntegral input) `shouldBe` expected
+        description = unwords $ show <$> [a, b, c]
+        assertion   = isPythagorean (mkTriplet a b c) `shouldBe` expected
 
--- Test cases adapted from `exercism/x-common` on 2016-09-19.
+    pythagoreanTripletsTest (x, y, ts) = it description assertion
+      where
+        description = unwords $ show <$> [x, y]
+        assertion   = pythagoreanTriplets x y `shouldBe` uncurry3 mkTriplet <$> ts
 
-data Case = Case { description :: String
-                 , input       :: Integer
-                 , expected    :: Maybe Integer
-                 }
+    uncurry3 f (x, y, z) = f x y z
 
-cases :: [Case]
-cases = [ Case { description = "first prime"
-               , input       = 1
-               , expected    = Just 2
-               }
-        , Case { description = "second prime"
-               , input       = 2
-               , expected    = Just 3
-               }
-        , Case { description = "sixth prime"
-               , input       = 6
-               , expected    = Just 13
-               }
-        , Case { description = "big prime"
-               , input       = 10001
-               , expected    = Just 104743
-               }
-        , Case { description = "there is no zeroth prime"
-               , input       = 0
-               , expected    = Nothing
-               }
-        ]
+    -- As of 2016-09-12, there was no reference file
+    -- for the test cases in `exercism/x-common`.
+
+    isPythagoreanCases = [ ( (3, 4, 5), True )
+                         , ( (3, 5, 4), True )
+                         , ( (4, 3, 5), True )
+                         , ( (4, 5, 3), True )
+                         , ( (5, 3, 4), True )
+                         , ( (5, 4, 3), True )
+                         , ( (3, 3, 3), False)
+                         , ( (5, 6, 7), False) ]
+
+    pythagoreanTripletsCases = [ (1 , 10, [ ( 3,  4,  5), ( 6,  8, 10) ])
+                               , (11, 20, [ (12, 16, 20)               ])
+                               , (56, 95, [ (57, 76, 95), (60, 63, 87) ]) ]
+--
+---- Primes
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "nth-prime" $
+--          describe "nth" $ for_ cases test
+--  where
+--
+--    test Case{..} = it description assertion
+--      where
+--        assertion = nth (fromIntegral input) `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common` on 2016-09-19.
+--
+--data Case = Case { description :: String
+--                 , input       :: Integer
+--                 , expected    :: Maybe Integer
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "first prime"
+--               , input       = 1
+--               , expected    = Just 2
+--               }
+--        , Case { description = "second prime"
+--               , input       = 2
+--               , expected    = Just 3
+--               }
+--        , Case { description = "sixth prime"
+--               , input       = 6
+--               , expected    = Just 13
+--               }
+--        , Case { description = "big prime"
+--               , input       = 10001
+--               , expected    = Just 104743
+--               }
+--        , Case { description = "there is no zeroth prime"
+--               , input       = 0
+--               , expected    = Nothing
+--               }
+--        ]
 ---- Allergies
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
