@@ -86,45 +86,67 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , isAllergicTo
 --  )
 --import Prime (nth)
-import Triplet (isPythagorean, mkTriplet, pythagoreanTriplets)
+-- import Triplet (isPythagorean, mkTriplet, pythagoreanTriplets)
+import Pascal (rows)
 
+
+-- Pascal's triangle
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "pythagorean-triplet" $ do
-          describe "isPythagorean"       $ for_ isPythagoreanCases       isPythagoreanTest
-          describe "pythagoreanTriplets" $ for_ pythagoreanTripletsCases pythagoreanTripletsTest
+specs = describe "pascals-triangle" $
+          describe "rows" $ for_ rowsCases rowsTest
   where
-
-    isPythagoreanTest ((a, b, c), expected) = it description assertion
+    rowsTest (description, n, expected) = it description assertion
       where
-        description = unwords $ show <$> [a, b, c]
-        assertion   = isPythagorean (mkTriplet a b c) `shouldBe` expected
+        assertion = rows n `shouldBe` expected
+    -- Test cases adapted from `exercism/x-common` on 2016-09-14.
+    rowsCases = [ ("no rows"      , 0, [                                    ])
+                , ("single row"   , 1, [[1]                                 ])
+                , ("two rows"     , 2, [[1], [1, 1]                         ])
+                , ("three rows"   , 3, [[1], [1, 1], [1, 2, 1]              ])
+                , ("four rows"    , 4, [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1]])
+                , ("negative rows",-1, [                                    ]) ]
 
-    pythagoreanTripletsTest (x, y, ts) = it description assertion
-      where
-        description = unwords $ show <$> [x, y]
-        assertion   = pythagoreanTriplets x y `shouldBe` uncurry3 mkTriplet <$> ts
-
-    uncurry3 f (x, y, z) = f x y z
-
-    -- As of 2016-09-12, there was no reference file
-    -- for the test cases in `exercism/x-common`.
-
-    isPythagoreanCases = [ ( (3, 4, 5), True )
-                         , ( (3, 5, 4), True )
-                         , ( (4, 3, 5), True )
-                         , ( (4, 5, 3), True )
-                         , ( (5, 3, 4), True )
-                         , ( (5, 4, 3), True )
-                         , ( (3, 3, 3), False)
-                         , ( (5, 6, 7), False) ]
-
-    pythagoreanTripletsCases = [ (1 , 10, [ ( 3,  4,  5), ( 6,  8, 10) ])
-                               , (11, 20, [ (12, 16, 20)               ])
-                               , (56, 95, [ (57, 76, 95), (60, 63, 87) ]) ]
+-- Pythagorean triplets
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
 --
+--specs :: Spec
+--specs = describe "pythagorean-triplet" $ do
+--          describe "isPythagorean"       $ for_ isPythagoreanCases       isPythagoreanTest
+--          describe "pythagoreanTriplets" $ for_ pythagoreanTripletsCases pythagoreanTripletsTest
+--  where
+--
+--    isPythagoreanTest ((a, b, c), expected) = it description assertion
+--      where
+--        description = unwords $ show <$> [a, b, c]
+--        assertion   = isPythagorean (mkTriplet a b c) `shouldBe` expected
+--
+--    pythagoreanTripletsTest (x, y, ts) = it description assertion
+--      where
+--        description = unwords $ show <$> [x, y]
+--        assertion   = pythagoreanTriplets x y `shouldBe` uncurry3 mkTriplet <$> ts
+--
+--    uncurry3 f (x, y, z) = f x y z
+--
+--    -- As of 2016-09-12, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    isPythagoreanCases = [ ( (3, 4, 5), True )
+--                         , ( (3, 5, 4), True )
+--                         , ( (4, 3, 5), True )
+--                         , ( (4, 5, 3), True )
+--                         , ( (5, 3, 4), True )
+--                         , ( (5, 4, 3), True )
+--                         , ( (3, 3, 3), False)
+--                         , ( (5, 6, 7), False) ]
+--
+--    pythagoreanTripletsCases = [ (1 , 10, [ ( 3,  4,  5), ( 6,  8, 10) ])
+--                               , (11, 20, [ (12, 16, 20)               ])
+--                               , (56, 95, [ (57, 76, 95), (60, 63, 87) ]) ]
+----
 ---- Primes
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs

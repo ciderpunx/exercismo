@@ -16,38 +16,39 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
-                     , Accumulate
-                     , Allergies
-                     , Anagram
-                     , AtBash
-                     , Beer
-                     , Bob
-                     , DNA
-                     , DNACount
-                     , Etl
-                     , Grains
-                     , Leap
-                     , LinkedList
-                     , ListOps
-                     , PhoneNumber
-                     , PrimeFactors
-                     , Prime
-                     , Raindrops
-                     , RobotSimulator
-                     , School
-                     , Scrabble
-                     , SecretHandshake
-                     , Series
-                     , SpaceAge
-                     , Strain
-                     , Sublist
-                     , SumOfMultiples
-                     , Triangle
-                     , Triplet
-                     , WordCount
-                     , WordSquare
-                     , Wordy
-                     , Wordy2
+--                     , Accumulate
+--                     , Allergies
+--                     , Anagram
+--                     , AtBash
+--                     , Beer
+--                     , Bob
+--                     , DNA
+--                     , DNACount
+--                     , Etl
+--                     , Grains
+--                     , Leap
+--                     , LinkedList
+--                     , ListOps
+--                     , PhoneNumber
+--                     , PrimeFactors
+--                     , Prime
+--                     , Raindrops
+--                     , RobotSimulator
+--                     , School
+--                     , Scrabble
+--                     , SecretHandshake
+--                     , Series
+--                     , SpaceAge
+--                     , Strain
+--                     , Sublist
+--                     , SumOfMultiples
+--                     , Triangle
+--                     , Triplet
+--                     , WordCount
+--                     , WordSquare
+--                     , Wordy
+--                     , Wordy2
+                       , Pascal
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , split
