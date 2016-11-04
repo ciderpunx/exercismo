@@ -11,8 +11,7 @@ getRow r  = let r' = 0 : r
             in  zipWith (+) r' (reverse r')
 
 getRow' :: [Integer] -> [Integer]
-getRow' []   = [1]
-getRow' [1]  = [1,1]
+getRow' []   = []
 getRow' prev =
     1 : map (\x -> prev !! x + prev !! (x+1)) [0..length prev - 2] ++ [1]
 
@@ -25,4 +24,4 @@ displayRows n =
              longest = length . show $ last rs
          in putStr $ concatMap (\x -> fmt x (rs !! x) longest) [0..numRows-1]
   where
-    fmt x row l = (concat . take (l`div`2 - x) $ repeat " ") ++ show row ++ "\n"
+    fmt x row l = (concat . take (l `div` 2 - x) $ repeat " ") ++ show row ++ "\n"
