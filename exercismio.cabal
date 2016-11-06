@@ -29,6 +29,8 @@ library
 --                     , Leap
 --                     , LinkedList
 --                     , ListOps
+--                     , Pascal
+                       , OcrNum
 --                     , PhoneNumber
 --                     , PrimeFactors
 --                     , Prime
@@ -48,7 +50,7 @@ library
 --                     , WordSquare
 --                     , Wordy
 --                     , Wordy2
-                       , Pascal
+
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , split
