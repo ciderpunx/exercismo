@@ -1,11 +1,12 @@
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# LANGUAGE RecordWildCards #-}
+-- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+-- {-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
 import Data.Foldable     (for_)
 --import Control.Exception (Exception, throw, evaluate)
-import Test.Hspec        (Spec, describe, it, shouldBe, shouldThrow, shouldSatisfy)
+import Control.Monad (unless)
+import Test.Hspec        (Spec, describe, it, shouldBe, expectationFailure, shouldThrow, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
 --import Data.Map          (fromList)
@@ -88,163 +89,252 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import Prime (nth)
 -- import Triplet (isPythagorean, mkTriplet, pythagoreanTriplets)
 -- import Pascal (rows)
-import OcrNum (convert)
+--import OcrNum (convert)
+import FoodChain (song)
 
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "ocr-numbers" $
-          describe "convert" $ for_ cases test
+specs = describe "food-chain" $
+
+          describe "song" $ do
+
+            -- First we test the input, line by line, to give more
+            -- useful error messages.
+
+            it "matches lines" $ sequence_ lineAssertions
+
+            -- Finally, because testing lines we are unable
+            -- to detect a missing newline at the end of the
+            -- lyrics, we test the full song.
+
+            it "matches full song" $ song `shouldBe` lyrics
   where
 
-    test Case{..} = it description assertion
-      where
-        assertion = convert (unlines input) `shouldBe` expected
+    lineAssertions = zipWith checkLine [1 :: Int ..] $ zipMaybe (lines song) (lines lyrics)
 
--- Test cases adapted from `exercism/x-common/ocr-numbers.json`
--- on 2016-08-09. Some deviations exist and are noted in comments.
+    checkLine lineno (got, want) =
+      unless (got == want) $
+        expectationFailure $ "mismatch at line " ++ show lineno ++ "\nexpected: " ++ show want ++ "\n but got: " ++ show got
 
-data Case = Case { description ::  String
-                 , expected    ::  String
-                 , input       :: [String]
-                 }
+    zipMaybe    []     []  = []
+    zipMaybe (x:xs)    []  = (Just x , Nothing) : zipMaybe xs []
+    zipMaybe    []  (y:ys) = (Nothing, Just y ) : zipMaybe [] ys
+    zipMaybe (x:xs) (y:ys) = (Just x , Just y ) : zipMaybe xs ys
 
-cases :: [Case]
-cases = [ Case { description = "Recognizes 0"
-               , expected    = "0"
-               , input       = [ " _ "
-                               , "| |"
-                               , "|_|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 1"
-               , expected    = "1"
-               , input       = [ "   "
-                               , "  |"
-                               , "  |"
-                               , "   " ]
-               }
-        , Case { description = "Unreadable but correctly sized inputs return ?"
-               , expected    = "?"
-               , input       = [ "   "
-                               , "  _"
-                               , "  |"
-                               , "   " ]
-               }
+-- Lyrics extracted from `exercism/x-common` on 2016-09-21.
 
-        {- In this track, the tests to determine if the input
-           has the correct format where not implemented.
+lyrics :: String
+lyrics =
+    "I know an old lady who swallowed a fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a spider.\n\
+    \It wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a bird.\n\
+    \How absurd to swallow a bird!\n\
+    \She swallowed the bird to catch the spider that wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a cat.\n\
+    \Imagine that, to swallow a cat!\n\
+    \She swallowed the cat to catch the bird.\n\
+    \She swallowed the bird to catch the spider that wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a dog.\n\
+    \What a hog, to swallow a dog!\n\
+    \She swallowed the dog to catch the cat.\n\
+    \She swallowed the cat to catch the bird.\n\
+    \She swallowed the bird to catch the spider that wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a goat.\n\
+    \Just opened her throat and swallowed a goat!\n\
+    \She swallowed the goat to catch the dog.\n\
+    \She swallowed the dog to catch the cat.\n\
+    \She swallowed the cat to catch the bird.\n\
+    \She swallowed the bird to catch the spider that wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a cow.\n\
+    \I don't know how she swallowed a cow!\n\
+    \She swallowed the cow to catch the goat.\n\
+    \She swallowed the goat to catch the dog.\n\
+    \She swallowed the dog to catch the cat.\n\
+    \She swallowed the cat to catch the bird.\n\
+    \She swallowed the bird to catch the spider that wriggled and jiggled and tickled inside her.\n\
+    \She swallowed the spider to catch the fly.\n\
+    \I don't know why she swallowed the fly. Perhaps she'll die.\n\
+    \\n\
+    \I know an old lady who swallowed a horse.\n\
+    \She's dead, of course!\n"
 
-        , Case { description = "Input with a number of lines that is not a multiple of four raises an error"
-               , expected    = -1
-               , input       = [ " _ "
-                               , "| |"
-                               , "   " ]
-               }
-        , Case { description = "Input with a number of columns that is not a multiple of three raises an error"
-               , expected    = -1
-               , input       = [ "    "
-                               , "   |"
-                               , "   |"
-                               , "    " ]
-               }
-        -}
 
-        , Case { description = "Recognizes 110101100"
-               , expected    = "110101100"
-               , input       = [ "       _     _        _  _ "
-                               , "  |  || |  || |  |  || || |"
-                               , "  |  ||_|  ||_|  |  ||_||_|"
-                               , "                           " ]
-               }
-        , Case { description = "Garbled numbers in a string are replaced with ?"
-               , expected    = "11?10?1?0"
-               , input       = [ "       _     _           _ "
-                               , "  |  || |  || |     || || |"
-                               , "  |  | _|  ||_|  |  ||_||_|"
-                               , "                           " ]
-               }
-        , Case { description = "Recognizes 2"
-               , expected    = "2"
-               , input       = [ " _ "
-                               , " _|"
-                               , "|_ "
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 3"
-               , expected    = "3"
-               , input       = [ " _ "
-                               , " _|"
-                               , " _|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 4"
-               , expected    = "4"
-               , input       = [ "   "
-                               , "|_|"
-                               , "  |"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 5"
-               , expected    = "5"
-               , input       = [ " _ "
-                               , "|_ "
-                               , " _|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 6"
-               , expected    = "6"
-               , input       = [ " _ "
-                               , "|_ "
-                               , "|_|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 7"
-               , expected    = "7"
-               , input       = [ " _ "
-                               , "  |"
-                               , "  |"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 8"
-               , expected    = "8"
-               , input       = [ " _ "
-                               , "|_|"
-                               , "|_|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes 9"
-               , expected    = "9"
-               , input       = [ " _ "
-                               , "|_|"
-                               , " _|"
-                               , "   " ]
-               }
-        , Case { description = "Recognizes string of decimal numbers"
-               , expected    = "1234567890"
-               , input       = [ "    _  _     _  _  _  _  _  _ "
-                               , "  | _| _||_||_ |_   ||_||_|| |"
-                               , "  ||_  _|  | _||_|  ||_| _||_|"
-                               , "                              " ]
-               }
-        , Case { description = "Numbers separated by empty lines are recognized. Lines are joined by commas."
-               , expected    = "123,456,789"
-               , input       = [ "    _  _ "
-                               , "  | _| _|"
-                               , "  ||_  _|"
-                               , "         "
-                               , "    _  _ "
-                               , "|_||_ |_ "
-                               , "  | _||_|"
-                               , "         "
-                               , " _  _  _ "
-                               , "  ||_||_|"
-                               , "  ||_| _|"
-                               , "         " ]
-               }
-        ]
-
+-- OCR
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "ocr-numbers" $
+--          describe "convert" $ for_ cases test
+--  where
+--
+--    test Case{..} = it description assertion
+--      where
+--        assertion = convert (unlines input) `shouldBe` expected
+--
+---- Test cases adapted from `exercism/x-common/ocr-numbers.json`
+---- on 2016-08-09. Some deviations exist and are noted in comments.
+--
+--data Case = Case { description ::  String
+--                 , expected    ::  String
+--                 , input       :: [String]
+--                 }
+--
+--cases :: [Case]
+--cases = [ Case { description = "Recognizes 0"
+--               , expected    = "0"
+--               , input       = [ " _ "
+--                               , "| |"
+--                               , "|_|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 1"
+--               , expected    = "1"
+--               , input       = [ "   "
+--                               , "  |"
+--                               , "  |"
+--                               , "   " ]
+--               }
+--        , Case { description = "Unreadable but correctly sized inputs return ?"
+--               , expected    = "?"
+--               , input       = [ "   "
+--                               , "  _"
+--                               , "  |"
+--                               , "   " ]
+--               }
+--
+--        {- In this track, the tests to determine if the input
+--           has the correct format where not implemented.
+--
+--        , Case { description = "Input with a number of lines that is not a multiple of four raises an error"
+--               , expected    = -1
+--               , input       = [ " _ "
+--                               , "| |"
+--                               , "   " ]
+--               }
+--        , Case { description = "Input with a number of columns that is not a multiple of three raises an error"
+--               , expected    = -1
+--               , input       = [ "    "
+--                               , "   |"
+--                               , "   |"
+--                               , "    " ]
+--               }
+--        -}
+--
+--        , Case { description = "Recognizes 110101100"
+--               , expected    = "110101100"
+--               , input       = [ "       _     _        _  _ "
+--                               , "  |  || |  || |  |  || || |"
+--                               , "  |  ||_|  ||_|  |  ||_||_|"
+--                               , "                           " ]
+--               }
+--        , Case { description = "Garbled numbers in a string are replaced with ?"
+--               , expected    = "11?10?1?0"
+--               , input       = [ "       _     _           _ "
+--                               , "  |  || |  || |     || || |"
+--                               , "  |  | _|  ||_|  |  ||_||_|"
+--                               , "                           " ]
+--               }
+--        , Case { description = "Recognizes 2"
+--               , expected    = "2"
+--               , input       = [ " _ "
+--                               , " _|"
+--                               , "|_ "
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 3"
+--               , expected    = "3"
+--               , input       = [ " _ "
+--                               , " _|"
+--                               , " _|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 4"
+--               , expected    = "4"
+--               , input       = [ "   "
+--                               , "|_|"
+--                               , "  |"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 5"
+--               , expected    = "5"
+--               , input       = [ " _ "
+--                               , "|_ "
+--                               , " _|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 6"
+--               , expected    = "6"
+--               , input       = [ " _ "
+--                               , "|_ "
+--                               , "|_|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 7"
+--               , expected    = "7"
+--               , input       = [ " _ "
+--                               , "  |"
+--                               , "  |"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 8"
+--               , expected    = "8"
+--               , input       = [ " _ "
+--                               , "|_|"
+--                               , "|_|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes 9"
+--               , expected    = "9"
+--               , input       = [ " _ "
+--                               , "|_|"
+--                               , " _|"
+--                               , "   " ]
+--               }
+--        , Case { description = "Recognizes string of decimal numbers"
+--               , expected    = "1234567890"
+--               , input       = [ "    _  _     _  _  _  _  _  _ "
+--                               , "  | _| _||_||_ |_   ||_||_|| |"
+--                               , "  ||_  _|  | _||_|  ||_| _||_|"
+--                               , "                              " ]
+--               }
+--        , Case { description = "Numbers separated by empty lines are recognized. Lines are joined by commas."
+--               , expected    = "123,456,789"
+--               , input       = [ "    _  _ "
+--                               , "  | _| _|"
+--                               , "  ||_  _|"
+--                               , "         "
+--                               , "    _  _ "
+--                               , "|_||_ |_ "
+--                               , "  | _||_|"
+--                               , "         "
+--                               , " _  _  _ "
+--                               , "  ||_||_|"
+--                               , "  ||_| _|"
+--                               , "         " ]
+--               }
+--        ]
+--
 -- Pascal's triangle
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs

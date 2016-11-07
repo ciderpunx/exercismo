@@ -25,12 +25,13 @@ library
 --                     , DNA
 --                     , DNACount
 --                     , Etl
+                       , FoodChain
 --                     , Grains
 --                     , Leap
 --                     , LinkedList
 --                     , ListOps
 --                     , Pascal
-                       , OcrNum
+--                       , OcrNum
 --                     , PhoneNumber
 --                     , PrimeFactors
 --                     , Prime
