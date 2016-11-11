@@ -30,9 +30,10 @@ library
 --                     , Leap
 --                     , LinkedList
 --                     , ListOps
-                       , Meetup
+--                     , Meetup
 --                     , OcrNum
 --                     , Pascal
+                       , Palindromes
 --                     , PhoneNumber
 --                     , PrimeFactors
 --                     , Prime
