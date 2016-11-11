@@ -1,9 +1,4 @@
 module Palindromes where
-import Data.Digits (digitsRev, unDigits)
-import Data.Map (fromListWith, toAscList)
-import Data.List (sortBy)
-import Data.Function (on)
-
 
 -- Take advantage of Haskell's laziness by only computing the first large palindrome.
 -- In the worst case we have to cycle through all pairs of numbers from max to max-min
@@ -37,6 +32,6 @@ factorsPairsRange n min max =
             , y>=x && y<=max
             ]
 
+-- Faster than using Data.Digits
 isPal :: Integer -> Bool
-isPal n =
-    fromIntegral n / fromIntegral (unDigits 10 (digitsRev 10 n)) == 1
+isPal n = show n == reverse (show n)
