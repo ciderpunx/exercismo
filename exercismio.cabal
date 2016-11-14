@@ -33,8 +33,9 @@ library
 --                     , Meetup
 --                     , OcrNum
 --                     , Pascal
-                       , Palindromes
+--                     , Palindromes
 --                     , PhoneNumber
+                       , PigLatin
 --                     , PrimeFactors
 --                     , Prime
 --                     , Raindrops
