@@ -94,48 +94,120 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import FoodChain (song)
 --import Meetup (Weekday(..), Schedule(..), meetupDay)
 -- import Palindromes (largestPalindrome, smallestPalindrome)
-import PigLatin (translate)
+-- import PigLatin (translate)
+import Garden
+  ( Plant ( Clover
+          , Grass
+          , Radishes
+          , Violets
+          )
+  , defaultGarden
+  , garden
+  , lookupPlants
+  )
 
--- Pig Latin
+-- Kindergarted Garden
+
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "pig-latin" $
-          describe "translate" $ do
+specs = describe "kindergarten-garden" $ do
 
-    -- Test cases adapted from `exercism/x-common/pig-latin.json` on 2016-11-06.
+    -- As of 2016-08-02, there was no reference file
+    -- for the test cases in `exercism/x-common`.
 
-    describe "ay is added to words that start with vowels" $ do
-        it "word beginning with a" $ translate "apple"  `shouldBe` "appleay"
-        it "word beginning with e" $ translate "ear"    `shouldBe` "earay"
-        it "word beginning with i" $ translate "igloo"  `shouldBe` "iglooay"
-        it "word beginning with o" $ translate "object" `shouldBe` "objectay"
-        it "word beginning with u" $ translate "under"  `shouldBe` "underay"
+    it "alice tests" $ do
 
-    describe "first letter and ay are moved to the end of words that start with consonants" $ do
-        it "word beginning with p" $ translate "pig"    `shouldBe` "igpay"
-        it "word beginning with k" $ translate "koala"  `shouldBe` "oalakay"
-        it "word beginning with y" $ translate "yellow" `shouldBe` "ellowyay"
-        it "word beginning with x" $ translate "xenon"  `shouldBe` "enonxay"
-        it "word beginning with q without a following u" $ translate "qat" `shouldBe` "atqay"
+      let alicePlants = lookupPlants "Alice" . defaultGarden
 
-    describe "some letter clusters are treated like a single consonant" $ do
-        it "word beginning with ch"  $ translate "chair"   `shouldBe` "airchay"
-        it "word beginning with qu"  $ translate "queen"   `shouldBe` "eenquay"
-        it "word beginning with qu and a preceding consonant" $ translate "square" `shouldBe` "aresquay"
-        it "... but not words beginning with a vowel then qu" $ translate "equal"  `shouldBe` "equalay"
-        it "word beginning with th"  $ translate "therapy" `shouldBe` "erapythay"
-        it "word beginning with thr" $ translate "thrush"  `shouldBe` "ushthray"
-        it "word beginning with sch" $ translate "school"  `shouldBe` "oolschay"
+      alicePlants "RC\nGG" `shouldBe` [ Radishes, Clover, Grass   , Grass  ]
+      alicePlants "VC\nRC" `shouldBe` [ Violets , Clover, Radishes, Clover ]
 
-    describe "some letter clusters are treated like a single vowel" $ do
-        it "word beginning with yt" $ translate "yttria" `shouldBe` "yttriaay"
-        it "word beginning with xr" $ translate "xray"   `shouldBe` "xrayay"
+    it "small garden" $ do
 
-    describe "phrases are translated" $
-        it "a whole phrase" $ translate "quick fast run" `shouldBe` "ickquay astfay unray"
+      let plants s  = lookupPlants s $ defaultGarden plantList
+          plantList = "VVCG\nVVRC"
 
+      plants "Bob" `shouldBe` [ Clover, Grass, Radishes, Clover ]
+
+    it "medium garden" $ do
+
+      let plants s  = lookupPlants s $ defaultGarden plantList
+          plantList = "VVCCGG\nVVCCGG"
+
+      plants "Bob"     `shouldBe` [ Clover, Clover, Clover, Clover ]
+      plants "Charlie" `shouldBe` [ Grass , Grass , Grass , Grass  ]
+
+    it "full garden" $ do
+
+      let plants s  = lookupPlants s $ defaultGarden plantList
+          plantList = "VRCGVVRVCGGCCGVRGCVCGCGV\nVRCCCGCRRGVCGCRVVCVGCGCV"
+
+      plants "Alice"   `shouldBe` [ Violets , Radishes, Violets , Radishes ]
+      plants "Bob"     `shouldBe` [ Clover  , Grass   , Clover  , Clover   ]
+      plants "Charlie" `shouldBe` [ Violets , Violets , Clover  , Grass    ]
+      plants "David"   `shouldBe` [ Radishes, Violets , Clover  , Radishes ]
+      plants "Eve"     `shouldBe` [ Clover  , Grass   , Radishes, Grass    ]
+      plants "Fred"    `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
+      plants "Ginny"   `shouldBe` [ Clover  , Grass   , Grass   , Clover   ]
+      plants "Harriet" `shouldBe` [ Violets , Radishes, Radishes, Violets  ]
+      plants "Ileana"  `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
+      plants "Joseph"  `shouldBe` [ Violets , Clover  , Violets , Grass    ]
+      plants "Kincaid" `shouldBe` [ Grass   , Clover  , Clover  , Grass    ]
+      plants "Larry"   `shouldBe` [ Grass   , Violets , Clover  , Violets  ]
+
+    it  "surprise garden" $ do
+
+      let plants s  = lookupPlants s $ garden students plantList
+          plantList = "VCRRGVRG\nRVGCCGCV"
+          students  = ["Samantha", "Patricia", "Xander", "Roger"]
+
+      plants "Patricia" `shouldBe` [ Violets , Clover  , Radishes, Violets ]
+      plants "Roger"    `shouldBe` [ Radishes, Radishes, Grass   , Clover  ]
+      plants "Samantha" `shouldBe` [ Grass   , Violets , Clover  , Grass   ]
+      plants "Xander"   `shouldBe` [ Radishes, Grass   , Clover  , Violets ]
+
+-- Pig Latin
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "pig-latin" $
+--          describe "translate" $ do
+--
+--    -- Test cases adapted from `exercism/x-common/pig-latin.json` on 2016-11-06.
+--
+--    describe "ay is added to words that start with vowels" $ do
+--        it "word beginning with a" $ translate "apple"  `shouldBe` "appleay"
+--        it "word beginning with e" $ translate "ear"    `shouldBe` "earay"
+--        it "word beginning with i" $ translate "igloo"  `shouldBe` "iglooay"
+--        it "word beginning with o" $ translate "object" `shouldBe` "objectay"
+--        it "word beginning with u" $ translate "under"  `shouldBe` "underay"
+--
+--    describe "first letter and ay are moved to the end of words that start with consonants" $ do
+--        it "word beginning with p" $ translate "pig"    `shouldBe` "igpay"
+--        it "word beginning with k" $ translate "koala"  `shouldBe` "oalakay"
+--        it "word beginning with y" $ translate "yellow" `shouldBe` "ellowyay"
+--        it "word beginning with x" $ translate "xenon"  `shouldBe` "enonxay"
+--        it "word beginning with q without a following u" $ translate "qat" `shouldBe` "atqay"
+--
+--    describe "some letter clusters are treated like a single consonant" $ do
+--        it "word beginning with ch"  $ translate "chair"   `shouldBe` "airchay"
+--        it "word beginning with qu"  $ translate "queen"   `shouldBe` "eenquay"
+--        it "word beginning with qu and a preceding consonant" $ translate "square" `shouldBe` "aresquay"
+--        it "... but not words beginning with a vowel then qu" $ translate "equal"  `shouldBe` "equalay"
+--        it "word beginning with th"  $ translate "therapy" `shouldBe` "erapythay"
+--        it "word beginning with thr" $ translate "thrush"  `shouldBe` "ushthray"
+--        it "word beginning with sch" $ translate "school"  `shouldBe` "oolschay"
+--
+--    describe "some letter clusters are treated like a single vowel" $ do
+--        it "word beginning with yt" $ translate "yttria" `shouldBe` "yttriaay"
+--        it "word beginning with xr" $ translate "xray"   `shouldBe` "xrayay"
+--
+--    describe "phrases are translated" $
+--        it "a whole phrase" $ translate "quick fast run" `shouldBe` "ickquay astfay unray"
+--
 ---- Palindrome products
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
