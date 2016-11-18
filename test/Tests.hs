@@ -95,149 +95,227 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import Meetup (Weekday(..), Schedule(..), meetupDay)
 -- import Palindromes (largestPalindrome, smallestPalindrome)
 -- import PigLatin (translate)
-import Garden
-  ( Plant ( Clover
-          , Grass
-          , Radishes
-          , Violets
-          )
-  , defaultGarden
-  , garden
-  , lookupPlants
-  )
+--import Garden
+--  ( Plant ( Clover
+--          , Grass
+--          , Radishes
+--          , Violets
+--          )
+--  , defaultGarden
+--  , garden
+--  , lookupPlants
+--  )
+import Luhn (addends, checkDigit, checksum, create, isValid)
 
--- Kindergarted Garden
 
+-- Luhn checksum
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "kindergarten-garden" $ do
+specs = describe "luhn" $ do
+    describe "standard tests" $ do
 
-    -- As of 2016-08-02, there was no reference file
-    -- for the test cases in `exercism/x-common`.
+      -- Test cases adapted from `exercism/x-common/luhn.json` on
+      -- 2016-08-04. Some deviations exist and are noted in comments.
 
-    it "alice tests" $ do
+      it "check digit" $
+        checkDigit 34567 `shouldBe` 7
 
-      let alicePlants = lookupPlants "Alice" . defaultGarden
+      it "check digit with input ending in zero" $
+        checkDigit 91370 `shouldBe` 0
 
-      alicePlants "RC\nGG" `shouldBe` [ Radishes, Clover, Grass   , Grass  ]
-      alicePlants "VC\nRC" `shouldBe` [ Violets , Clover, Radishes, Clover ]
+      it "check addends" $
+        addends 12121 `shouldBe` [1, 4, 1, 4, 1]
 
-    it "small garden" $ do
+      it "check too large addends" $
+        addends 8631 `shouldBe` [7, 6, 6, 1]
 
-      let plants s  = lookupPlants s $ defaultGarden plantList
-          plantList = "VVCG\nVVRC"
+      -- The reference test cases expect the checksum function to return
+      -- the simple sum of the transformed digits, not their `mod 10` sum.
+      -- In this track, we insist on the `mod 10`. :)
 
-      plants "Bob" `shouldBe` [ Clover, Grass, Radishes, Clover ]
+      it "checksum" $
+        checksum 4913 `shouldBe` 2      -- The reference test expects 22.
 
-    it "medium garden" $ do
+      it "checksum of larger number" $
+        checksum 201773 `shouldBe` 1    -- The reference test expects 21.
 
-      let plants s  = lookupPlants s $ defaultGarden plantList
-          plantList = "VVCCGG\nVVCCGG"
+      it "check invalid number" $
+        isValid 738 `shouldBe` False
 
-      plants "Bob"     `shouldBe` [ Clover, Clover, Clover, Clover ]
-      plants "Charlie" `shouldBe` [ Grass , Grass , Grass , Grass  ]
+      it "check valid number" $
+        isValid 8739567 `shouldBe` True
 
-    it "full garden" $ do
+      it "create valid number" $
+        create 123 `shouldBe` 1230
 
-      let plants s  = lookupPlants s $ defaultGarden plantList
-          plantList = "VRCGVVRVCGGCCGVRGCVCGCGV\nVRCCCGCRRGVCGCRVVCVGCGCV"
+      it "create larger valid number" $
+        create 873956 `shouldBe` 8739567
 
-      plants "Alice"   `shouldBe` [ Violets , Radishes, Violets , Radishes ]
-      plants "Bob"     `shouldBe` [ Clover  , Grass   , Clover  , Clover   ]
-      plants "Charlie" `shouldBe` [ Violets , Violets , Clover  , Grass    ]
-      plants "David"   `shouldBe` [ Radishes, Violets , Clover  , Radishes ]
-      plants "Eve"     `shouldBe` [ Clover  , Grass   , Radishes, Grass    ]
-      plants "Fred"    `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
-      plants "Ginny"   `shouldBe` [ Clover  , Grass   , Grass   , Clover   ]
-      plants "Harriet" `shouldBe` [ Violets , Radishes, Radishes, Violets  ]
-      plants "Ileana"  `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
-      plants "Joseph"  `shouldBe` [ Violets , Clover  , Violets , Grass    ]
-      plants "Kincaid" `shouldBe` [ Grass   , Clover  , Clover  , Grass    ]
-      plants "Larry"   `shouldBe` [ Grass   , Violets , Clover  , Violets  ]
+      it "create even larger valid number" $
+        create 837263756 `shouldBe` 8372637564
 
-    it  "surprise garden" $ do
+    describe "track-specific tests" $ do
 
-      let plants s  = lookupPlants s $ garden students plantList
-          plantList = "VCRRGVRG\nRVGCCGCV"
-          students  = ["Samantha", "Patricia", "Xander", "Roger"]
+      -- This track has some tests that were not included in the
+      -- reference test cases from `exercism/x-common/leap.json`.
 
-      plants "Patricia" `shouldBe` [ Violets , Clover  , Radishes, Violets ]
-      plants "Roger"    `shouldBe` [ Radishes, Radishes, Grass   , Clover  ]
-      plants "Samantha" `shouldBe` [ Grass   , Violets , Clover  , Grass   ]
-      plants "Xander"   `shouldBe` [ Radishes, Grass   , Clover  , Violets ]
+      it "checksum 1111" $
+        checksum 1111 `shouldBe` 6
 
--- Pig Latin
+      it "checksum 8763" $
+        checksum 8763 `shouldBe` 0
+
+      it "checksum 8739567" $
+        checksum 8739567 `shouldBe` 0
+
+      it "checksum 2323200577663554" $
+        checksum 2323200577663554 `shouldBe` 0
+
+      it "isValid 1111" $
+        isValid 1111 `shouldBe` False
+
+      it "isValid 8763" $
+        isValid 8763 `shouldBe` True
+
+      it "isValid 2323200577663554" $
+        isValid 2323200577663554 `shouldBe` True
+
+      it "create 232320057766355" $
+        create 232320057766355 `shouldBe` 2323200577663554
+
+-- Kindergarted Garden
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
 --
 --specs :: Spec
---specs = describe "pig-latin" $
---          describe "translate" $ do
+--specs = describe "kindergarten-garden" $ do
 --
---    -- Test cases adapted from `exercism/x-common/pig-latin.json` on 2016-11-06.
---
---    describe "ay is added to words that start with vowels" $ do
---        it "word beginning with a" $ translate "apple"  `shouldBe` "appleay"
---        it "word beginning with e" $ translate "ear"    `shouldBe` "earay"
---        it "word beginning with i" $ translate "igloo"  `shouldBe` "iglooay"
---        it "word beginning with o" $ translate "object" `shouldBe` "objectay"
---        it "word beginning with u" $ translate "under"  `shouldBe` "underay"
---
---    describe "first letter and ay are moved to the end of words that start with consonants" $ do
---        it "word beginning with p" $ translate "pig"    `shouldBe` "igpay"
---        it "word beginning with k" $ translate "koala"  `shouldBe` "oalakay"
---        it "word beginning with y" $ translate "yellow" `shouldBe` "ellowyay"
---        it "word beginning with x" $ translate "xenon"  `shouldBe` "enonxay"
---        it "word beginning with q without a following u" $ translate "qat" `shouldBe` "atqay"
---
---    describe "some letter clusters are treated like a single consonant" $ do
---        it "word beginning with ch"  $ translate "chair"   `shouldBe` "airchay"
---        it "word beginning with qu"  $ translate "queen"   `shouldBe` "eenquay"
---        it "word beginning with qu and a preceding consonant" $ translate "square" `shouldBe` "aresquay"
---        it "... but not words beginning with a vowel then qu" $ translate "equal"  `shouldBe` "equalay"
---        it "word beginning with th"  $ translate "therapy" `shouldBe` "erapythay"
---        it "word beginning with thr" $ translate "thrush"  `shouldBe` "ushthray"
---        it "word beginning with sch" $ translate "school"  `shouldBe` "oolschay"
---
---    describe "some letter clusters are treated like a single vowel" $ do
---        it "word beginning with yt" $ translate "yttria" `shouldBe` "yttriaay"
---        it "word beginning with xr" $ translate "xray"   `shouldBe` "xrayay"
---
---    describe "phrases are translated" $
---        it "a whole phrase" $ translate "quick fast run" `shouldBe` "ickquay astfay unray"
---
----- Palindrome products
---main :: IO ()
---main = hspecWith defaultConfig {configFastFail = True} specs
---
---specs :: Spec
---specs = describe "palindrome-products" $ for_ cases test
---  where
---    test (desc, minFactor, maxFactor, sPal, sPalFactors, lPal, lPalFactors) =
---      describe desc $ do
---        let sortPair (a, b)  = if a < b then (a, b) else (b, a)
---        let normalize        = sort . nub . map sortPair
---        describe "smallesPalindrome" $ do
---          let (value, factors) = smallestPalindrome minFactor maxFactor
---          it "value"   $ value             `shouldBe` sPal
---          it "factors" $ normalize factors `shouldBe` sPalFactors
---        describe "largestPalindrome" $ do
---          let (value, factors) = largestPalindrome minFactor maxFactor
---          it "value"   $ value             `shouldBe` lPal
---          it "factors" $ normalize factors `shouldBe` lPalFactors
---
---    -- As of 2016-09-07, there was no reference file
+--    -- As of 2016-08-02, there was no reference file
 --    -- for the test cases in `exercism/x-common`.
 --
---    cases = [ ("palindromes from single digit factors",     1,     9,         1, [(    1,     1)],          9, [(1, 9), (3, 3)])
---            , ("palindromes from double digit factors",    10,    99,       121, [(   11,    11)],       9009, [(   91,    99)])
---            , ("palindromes from triple digit factors",   100,   999,     10201, [(  101,   101)],     906609, [(  913,   993)])
---            , ("palindromes from four digit factors"  ,  1000,  9999,   1002001, [( 1001,  1001)],   99000099, [( 9901,  9999)])
---            , ("palindromes from five digit factors"  , 10000, 99999, 100020001, [(10001, 10001)], 9966006699, [(99681, 99979)]) ]
+--    it "alice tests" $ do
 --
-
+--      let alicePlants = lookupPlants "Alice" . defaultGarden
+--
+--      alicePlants "RC\nGG" `shouldBe` [ Radishes, Clover, Grass   , Grass  ]
+--      alicePlants "VC\nRC" `shouldBe` [ Violets , Clover, Radishes, Clover ]
+--
+--    it "small garden" $ do
+--
+--      let plants s  = lookupPlants s $ defaultGarden plantList
+--          plantList = "VVCG\nVVRC"
+--
+--      plants "Bob" `shouldBe` [ Clover, Grass, Radishes, Clover ]
+--
+--    it "medium garden" $ do
+--
+--      let plants s  = lookupPlants s $ defaultGarden plantList
+--          plantList = "VVCCGG\nVVCCGG"
+--
+--      plants "Bob"     `shouldBe` [ Clover, Clover, Clover, Clover ]
+--      plants "Charlie" `shouldBe` [ Grass , Grass , Grass , Grass  ]
+--
+--    it "full garden" $ do
+--
+--      let plants s  = lookupPlants s $ defaultGarden plantList
+--          plantList = "VRCGVVRVCGGCCGVRGCVCGCGV\nVRCCCGCRRGVCGCRVVCVGCGCV"
+--
+--      plants "Alice"   `shouldBe` [ Violets , Radishes, Violets , Radishes ]
+--      plants "Bob"     `shouldBe` [ Clover  , Grass   , Clover  , Clover   ]
+--      plants "Charlie" `shouldBe` [ Violets , Violets , Clover  , Grass    ]
+--      plants "David"   `shouldBe` [ Radishes, Violets , Clover  , Radishes ]
+--      plants "Eve"     `shouldBe` [ Clover  , Grass   , Radishes, Grass    ]
+--      plants "Fred"    `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
+--      plants "Ginny"   `shouldBe` [ Clover  , Grass   , Grass   , Clover   ]
+--      plants "Harriet" `shouldBe` [ Violets , Radishes, Radishes, Violets  ]
+--      plants "Ileana"  `shouldBe` [ Grass   , Clover  , Violets , Clover   ]
+--      plants "Joseph"  `shouldBe` [ Violets , Clover  , Violets , Grass    ]
+--      plants "Kincaid" `shouldBe` [ Grass   , Clover  , Clover  , Grass    ]
+--      plants "Larry"   `shouldBe` [ Grass   , Violets , Clover  , Violets  ]
+--
+--    it  "surprise garden" $ do
+--
+--      let plants s  = lookupPlants s $ garden students plantList
+--          plantList = "VCRRGVRG\nRVGCCGCV"
+--          students  = ["Samantha", "Patricia", "Xander", "Roger"]
+--
+--      plants "Patricia" `shouldBe` [ Violets , Clover  , Radishes, Violets ]
+--      plants "Roger"    `shouldBe` [ Radishes, Radishes, Grass   , Clover  ]
+--      plants "Samantha" `shouldBe` [ Grass   , Violets , Clover  , Grass   ]
+--      plants "Xander"   `shouldBe` [ Radishes, Grass   , Clover  , Violets ]
+--
+---- Pig Latin
+----main :: IO ()
+----main = hspecWith defaultConfig {configFastFail = True} specs
+----
+----specs :: Spec
+----specs = describe "pig-latin" $
+----          describe "translate" $ do
+----
+----    -- Test cases adapted from `exercism/x-common/pig-latin.json` on 2016-11-06.
+----
+----    describe "ay is added to words that start with vowels" $ do
+----        it "word beginning with a" $ translate "apple"  `shouldBe` "appleay"
+----        it "word beginning with e" $ translate "ear"    `shouldBe` "earay"
+----        it "word beginning with i" $ translate "igloo"  `shouldBe` "iglooay"
+----        it "word beginning with o" $ translate "object" `shouldBe` "objectay"
+----        it "word beginning with u" $ translate "under"  `shouldBe` "underay"
+----
+----    describe "first letter and ay are moved to the end of words that start with consonants" $ do
+----        it "word beginning with p" $ translate "pig"    `shouldBe` "igpay"
+----        it "word beginning with k" $ translate "koala"  `shouldBe` "oalakay"
+----        it "word beginning with y" $ translate "yellow" `shouldBe` "ellowyay"
+----        it "word beginning with x" $ translate "xenon"  `shouldBe` "enonxay"
+----        it "word beginning with q without a following u" $ translate "qat" `shouldBe` "atqay"
+----
+----    describe "some letter clusters are treated like a single consonant" $ do
+----        it "word beginning with ch"  $ translate "chair"   `shouldBe` "airchay"
+----        it "word beginning with qu"  $ translate "queen"   `shouldBe` "eenquay"
+----        it "word beginning with qu and a preceding consonant" $ translate "square" `shouldBe` "aresquay"
+----        it "... but not words beginning with a vowel then qu" $ translate "equal"  `shouldBe` "equalay"
+----        it "word beginning with th"  $ translate "therapy" `shouldBe` "erapythay"
+----        it "word beginning with thr" $ translate "thrush"  `shouldBe` "ushthray"
+----        it "word beginning with sch" $ translate "school"  `shouldBe` "oolschay"
+----
+----    describe "some letter clusters are treated like a single vowel" $ do
+----        it "word beginning with yt" $ translate "yttria" `shouldBe` "yttriaay"
+----        it "word beginning with xr" $ translate "xray"   `shouldBe` "xrayay"
+----
+----    describe "phrases are translated" $
+----        it "a whole phrase" $ translate "quick fast run" `shouldBe` "ickquay astfay unray"
+----
+------ Palindrome products
+----main :: IO ()
+----main = hspecWith defaultConfig {configFastFail = True} specs
+----
+----specs :: Spec
+----specs = describe "palindrome-products" $ for_ cases test
+----  where
+----    test (desc, minFactor, maxFactor, sPal, sPalFactors, lPal, lPalFactors) =
+----      describe desc $ do
+----        let sortPair (a, b)  = if a < b then (a, b) else (b, a)
+----        let normalize        = sort . nub . map sortPair
+----        describe "smallesPalindrome" $ do
+----          let (value, factors) = smallestPalindrome minFactor maxFactor
+----          it "value"   $ value             `shouldBe` sPal
+----          it "factors" $ normalize factors `shouldBe` sPalFactors
+----        describe "largestPalindrome" $ do
+----          let (value, factors) = largestPalindrome minFactor maxFactor
+----          it "value"   $ value             `shouldBe` lPal
+----          it "factors" $ normalize factors `shouldBe` lPalFactors
+----
+----    -- As of 2016-09-07, there was no reference file
+----    -- for the test cases in `exercism/x-common`.
+----
+----    cases = [ ("palindromes from single digit factors",     1,     9,         1, [(    1,     1)],          9, [(1, 9), (3, 3)])
+----            , ("palindromes from double digit factors",    10,    99,       121, [(   11,    11)],       9009, [(   91,    99)])
+----            , ("palindromes from triple digit factors",   100,   999,     10201, [(  101,   101)],     906609, [(  913,   993)])
+----            , ("palindromes from four digit factors"  ,  1000,  9999,   1002001, [( 1001,  1001)],   99000099, [( 9901,  9999)])
+----            , ("palindromes from five digit factors"  , 10000, 99999, 100020001, [(10001, 10001)], 9966006699, [(99681, 99979)]) ]
+----
+--
 -- Meetup
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
