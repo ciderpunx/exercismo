@@ -1,11 +1,12 @@
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
--- {-# LANGUAGE RecordWildCards #-}
+-- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+{-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
 import Data.Foldable     (for_)
-import Control.Arrow     ((&&&))
-import qualified Data.Vector as Vector (fromList)
+import Data.List         (sort)
+--import Control.Arrow     ((&&&))
+--import qualified Data.Vector as Vector (fromList)
 --import Data.Time.Calendar (fromGregorian)
 --import Control.Exception (Exception, throw, evaluate)
 --import Control.Monad (unless)
@@ -108,89 +109,156 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , lookupPlants
 --  )
 --import Luhn (addends, checkDigit, checksum, create, isValid)
-import Matrix
-  ( Matrix
-  , cols
-  , column
-  , flatten
-  , fromList
-  , fromString
-  , reshape
-  , row
-  , rows
-  , shape
-  , transpose
-  )
+--import Matrix
+--  ( Matrix
+--  , cols
+--  , column
+--  , flatten
+--  , fromList
+--  , fromString
+--  , reshape
+--  , row
+--  , rows
+--  , shape
+--  , transpose
+--  )
 
--- MAtrix
+import Change (findFewestCoins)
+
+-- change
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "matrix" $ do
+specs = describe "Change" $
+          describe "change" $ for_ cases test
+  where
 
-    -- As of 2016-08-08, there was no reference file
-    -- for the test cases in `exercism/x-common`.
+    test Case{..} = it description assertion
+      where
+        assertion  = expression `shouldBe` expected
+        expression = sort <$> findFewestCoins target coins
 
-    let intMatrix = fromString :: String -> Matrix Int
-    let vector = Vector.fromList
+-- Test cases adapted from `exercism/x-common` on 2016-09-17.
 
-    it "extract first row" $ do
-      row 0 (intMatrix "1 2\n10 20") `shouldBe` vector [1, 2]
-      row 0 (intMatrix "9 7\n8 6"  ) `shouldBe` vector [9, 7]
+data Case = Case { description  ::        String
+                 , coins        ::       [Integer]
+                 , target       ::        Integer
+                 , expected     :: Maybe [Integer]
+                 }
 
-    it "extract second row" $ do
-      row 1 (intMatrix "9 8 7\n19 18 17") `shouldBe` vector [19, 18, 17]
-      row 1 (intMatrix "1 4 9\n16 25 36") `shouldBe` vector [16, 25, 36]
+cases :: [Case]
+cases = [ Case { description = "single coin change"
+               , coins = [1, 5, 10, 25, 100]
+               , target = 25
+               , expected = Just [25]
+            }
+        , Case { description = "multiple coin change"
+               , coins = [1, 5, 10, 25, 100]
+               , target = 15
+               , expected = Just [5, 10]
+            }
+        , Case { description = "change with Lilliputian Coins"
+               , coins = [1, 4, 15, 20, 50]
+               , target = 23
+               , expected = Just [4, 4, 15]
+            }
+        , Case { description = "change with Lower Elbonia Coins"
+               , coins = [1, 5, 10, 21, 25]
+               , target = 63
+               , expected = Just [21, 21, 21]
+            }
+        , Case { description = "large target values"
+               , coins = [1, 2, 5, 10, 20, 50, 100]
+               , target = 999
+               , expected = Just [2, 2, 5, 20, 20, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+            }
+        , Case { description = "no coins make 0 change"
+               , coins = [1, 5, 10, 21, 25]
+               , target = 0
+               , expected = Just []
+             }
+        , Case { description = "error testing for change smaller than the smallest of coins"
+               , coins = [5, 10]
+               , target = 3
+               , expected = Nothing
+             }
+        , Case { description = "cannot find negative change values"
+               , coins = [1, 2, 5]
+               , target = -5
+               , expected = Nothing
+             }
+        ]
 
-    it "extract first column" $ do
-      column 0 (intMatrix "1 2 3\n4 5 6\n7 8 9\n 8 7 6")
-        `shouldBe` vector [1, 4, 7, 8]
-      column 1 (intMatrix "89 1903 3\n18 3 1\n9 4 800")
-        `shouldBe` vector [1903, 3, 4]
+---- MAtrix
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "matrix" $ do
 
-    it "shape" $ do
-      shape (intMatrix ""        ) `shouldBe` (0, 0)
-      shape (intMatrix "1"       ) `shouldBe` (1, 1)
-      shape (intMatrix "1\n2"    ) `shouldBe` (2, 1)
-      shape (intMatrix "1 2"     ) `shouldBe` (1, 2)
-      shape (intMatrix "1 2\n3 4") `shouldBe` (2, 2)
-
-    it "rows & cols" $
-      (rows &&& cols) (intMatrix "1 2") `shouldBe` (1, 2)
-
-    it "eq" $ do
-
-      intMatrix "1 2" `shouldBe`    intMatrix "1 2"
-      intMatrix "2 3" `shouldNotBe` intMatrix "1 2 3"
-
-    it "fromList" $ do
-      fromList [[1 ,  2]] `shouldBe` intMatrix "1 2"
-      fromList [[1], [2]] `shouldBe` intMatrix "1\n2"
-
-    it "transpose" $ do
-      transpose (intMatrix "1\n2\n3"      ) `shouldBe` intMatrix "1 2 3"
-      transpose (intMatrix "1 4\n2 5\n3 6") `shouldBe` intMatrix "1 2 3\n4 5 6"
-
-    it "reshape" $
-      reshape (2, 2) (intMatrix "1 2 3 4") `shouldBe` intMatrix "1 2\n3 4"
-
-    it "flatten" $
-      flatten (intMatrix "1 2\n3 4") `shouldBe` vector [1, 2, 3, 4]
-
-    it "matrix of chars" $
-      fromString "'f' 'o' 'o'\n'b' 'a' 'r'" `shouldBe` fromList ["foo", "bar"]
-
-    it "matrix of strings" $ 
-       fromString "\"this one\"\n\"may be tricky!\""
-       `shouldBe` fromList [ ["this one"      ]
-                           , ["may be tricky!"] ]
-
-    it "matrix of strings 2" $ 
-       fromString "\"this one\" \"one\" \n\"may be tricky!\" \"really tricky\""
-       `shouldBe` fromList [ ["this one"      , "one"          ]
-                           , ["may be tricky!", "really tricky"] ]
-
+--    -- As of 2016-08-08, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    let intMatrix = fromString :: String -> Matrix Int
+--    let vector = Vector.fromList
+--
+--    it "extract first row" $ do
+--      row 0 (intMatrix "1 2\n10 20") `shouldBe` vector [1, 2]
+--      row 0 (intMatrix "9 7\n8 6"  ) `shouldBe` vector [9, 7]
+--
+--    it "extract second row" $ do
+--      row 1 (intMatrix "9 8 7\n19 18 17") `shouldBe` vector [19, 18, 17]
+--      row 1 (intMatrix "1 4 9\n16 25 36") `shouldBe` vector [16, 25, 36]
+--
+--    it "extract first column" $ do
+--      column 0 (intMatrix "1 2 3\n4 5 6\n7 8 9\n 8 7 6")
+--        `shouldBe` vector [1, 4, 7, 8]
+--      column 1 (intMatrix "89 1903 3\n18 3 1\n9 4 800")
+--        `shouldBe` vector [1903, 3, 4]
+--
+--    it "shape" $ do
+--      shape (intMatrix ""        ) `shouldBe` (0, 0)
+--      shape (intMatrix "1"       ) `shouldBe` (1, 1)
+--      shape (intMatrix "1\n2"    ) `shouldBe` (2, 1)
+--      shape (intMatrix "1 2"     ) `shouldBe` (1, 2)
+--      shape (intMatrix "1 2\n3 4") `shouldBe` (2, 2)
+--
+--    it "rows & cols" $
+--      (rows &&& cols) (intMatrix "1 2") `shouldBe` (1, 2)
+--
+--    it "eq" $ do
+--
+--      intMatrix "1 2" `shouldBe`    intMatrix "1 2"
+--      intMatrix "2 3" `shouldNotBe` intMatrix "1 2 3"
+--
+--    it "fromList" $ do
+--      fromList [[1 ,  2]] `shouldBe` intMatrix "1 2"
+--      fromList [[1], [2]] `shouldBe` intMatrix "1\n2"
+--
+--    it "transpose" $ do
+--      transpose (intMatrix "1\n2\n3"      ) `shouldBe` intMatrix "1 2 3"
+--      transpose (intMatrix "1 4\n2 5\n3 6") `shouldBe` intMatrix "1 2 3\n4 5 6"
+--
+--    it "reshape" $
+--      reshape (2, 2) (intMatrix "1 2 3 4") `shouldBe` intMatrix "1 2\n3 4"
+--
+--    it "flatten" $
+--      flatten (intMatrix "1 2\n3 4") `shouldBe` vector [1, 2, 3, 4]
+--
+--    it "matrix of chars" $
+--      fromString "'f' 'o' 'o'\n'b' 'a' 'r'" `shouldBe` fromList ["foo", "bar"]
+--
+--    it "matrix of strings" $ 
+--       fromString "\"this one\"\n\"may be tricky!\""
+--       `shouldBe` fromList [ ["this one"      ]
+--                           , ["may be tricky!"] ]
+--
+--    it "matrix of strings 2" $ 
+--       fromString "\"this one\" \"one\" \n\"may be tricky!\" \"really tricky\""
+--       `shouldBe` fromList [ ["this one"      , "one"          ]
+--                           , ["may be tricky!", "really tricky"] ]
+--
 ---- Luhn checksum
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
