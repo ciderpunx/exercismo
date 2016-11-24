@@ -31,7 +31,8 @@ library
 --                     , Leap
 --                     , LinkedList
 --                     , ListOps
-                       , Luhn
+--                     , Luhn
+                       , Matrix
 --                     , Meetup
 --                     , OcrNum
 --                     , Pascal
@@ -64,6 +65,7 @@ library
                      , time
                      , digits
                      , mtl
+                     , vector
   default-language:    Haskell2010
 
 executable exercismio-exe
@@ -85,6 +87,7 @@ test-suite exercismio-test
                      , exercismio
                      , containers
                      , split
+                     , vector
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

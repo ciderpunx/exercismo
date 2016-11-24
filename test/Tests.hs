@@ -4,10 +4,12 @@
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
 import Data.Foldable     (for_)
+import Control.Arrow     ((&&&))
+import qualified Data.Vector as Vector (fromList)
 --import Data.Time.Calendar (fromGregorian)
 --import Control.Exception (Exception, throw, evaluate)
 --import Control.Monad (unless)
-import Test.Hspec        (Spec, describe, it, shouldBe, expectationFailure, shouldThrow, shouldSatisfy)
+import Test.Hspec        (Spec, describe, it, shouldBe, shouldNotBe, expectationFailure, shouldThrow, shouldSatisfy)
 import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Data.Either       (isLeft)
 --import Data.Map          (fromList)
@@ -105,86 +107,167 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , garden
 --  , lookupPlants
 --  )
-import Luhn (addends, checkDigit, checksum, create, isValid)
+--import Luhn (addends, checkDigit, checksum, create, isValid)
+import Matrix
+  ( Matrix
+  , cols
+  , column
+  , flatten
+  , fromList
+  , fromString
+  , reshape
+  , row
+  , rows
+  , shape
+  , transpose
+  )
 
-
--- Luhn checksum
+-- MAtrix
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "luhn" $ do
-    describe "standard tests" $ do
+specs = describe "matrix" $ do
 
-      -- Test cases adapted from `exercism/x-common/luhn.json` on
-      -- 2016-08-04. Some deviations exist and are noted in comments.
+    -- As of 2016-08-08, there was no reference file
+    -- for the test cases in `exercism/x-common`.
 
-      it "check digit" $
-        checkDigit 34567 `shouldBe` 7
+    let intMatrix = fromString :: String -> Matrix Int
+    let vector = Vector.fromList
 
-      it "check digit with input ending in zero" $
-        checkDigit 91370 `shouldBe` 0
+    it "extract first row" $ do
+      row 0 (intMatrix "1 2\n10 20") `shouldBe` vector [1, 2]
+      row 0 (intMatrix "9 7\n8 6"  ) `shouldBe` vector [9, 7]
 
-      it "check addends" $
-        addends 12121 `shouldBe` [1, 4, 1, 4, 1]
+    it "extract second row" $ do
+      row 1 (intMatrix "9 8 7\n19 18 17") `shouldBe` vector [19, 18, 17]
+      row 1 (intMatrix "1 4 9\n16 25 36") `shouldBe` vector [16, 25, 36]
 
-      it "check too large addends" $
-        addends 8631 `shouldBe` [7, 6, 6, 1]
+    it "extract first column" $ do
+      column 0 (intMatrix "1 2 3\n4 5 6\n7 8 9\n 8 7 6")
+        `shouldBe` vector [1, 4, 7, 8]
+      column 1 (intMatrix "89 1903 3\n18 3 1\n9 4 800")
+        `shouldBe` vector [1903, 3, 4]
 
-      -- The reference test cases expect the checksum function to return
-      -- the simple sum of the transformed digits, not their `mod 10` sum.
-      -- In this track, we insist on the `mod 10`. :)
+    it "shape" $ do
+      shape (intMatrix ""        ) `shouldBe` (0, 0)
+      shape (intMatrix "1"       ) `shouldBe` (1, 1)
+      shape (intMatrix "1\n2"    ) `shouldBe` (2, 1)
+      shape (intMatrix "1 2"     ) `shouldBe` (1, 2)
+      shape (intMatrix "1 2\n3 4") `shouldBe` (2, 2)
 
-      it "checksum" $
-        checksum 4913 `shouldBe` 2      -- The reference test expects 22.
+    it "rows & cols" $
+      (rows &&& cols) (intMatrix "1 2") `shouldBe` (1, 2)
 
-      it "checksum of larger number" $
-        checksum 201773 `shouldBe` 1    -- The reference test expects 21.
+    it "eq" $ do
 
-      it "check invalid number" $
-        isValid 738 `shouldBe` False
+      intMatrix "1 2" `shouldBe`    intMatrix "1 2"
+      intMatrix "2 3" `shouldNotBe` intMatrix "1 2 3"
 
-      it "check valid number" $
-        isValid 8739567 `shouldBe` True
+    it "fromList" $ do
+      fromList [[1 ,  2]] `shouldBe` intMatrix "1 2"
+      fromList [[1], [2]] `shouldBe` intMatrix "1\n2"
 
-      it "create valid number" $
-        create 123 `shouldBe` 1230
+    it "transpose" $ do
+      transpose (intMatrix "1\n2\n3"      ) `shouldBe` intMatrix "1 2 3"
+      transpose (intMatrix "1 4\n2 5\n3 6") `shouldBe` intMatrix "1 2 3\n4 5 6"
 
-      it "create larger valid number" $
-        create 873956 `shouldBe` 8739567
+    it "reshape" $
+      reshape (2, 2) (intMatrix "1 2 3 4") `shouldBe` intMatrix "1 2\n3 4"
 
-      it "create even larger valid number" $
-        create 837263756 `shouldBe` 8372637564
+    it "flatten" $
+      flatten (intMatrix "1 2\n3 4") `shouldBe` vector [1, 2, 3, 4]
 
-    describe "track-specific tests" $ do
+    it "matrix of chars" $
+      fromString "'f' 'o' 'o'\n'b' 'a' 'r'" `shouldBe` fromList ["foo", "bar"]
 
-      -- This track has some tests that were not included in the
-      -- reference test cases from `exercism/x-common/leap.json`.
+    it "matrix of strings" $ 
+       fromString "\"this one\"\n\"may be tricky!\""
+       `shouldBe` fromList [ ["this one"      ]
+                           , ["may be tricky!"] ]
 
-      it "checksum 1111" $
-        checksum 1111 `shouldBe` 6
+    it "matrix of strings 2" $ 
+       fromString "\"this one\" \"one\" \n\"may be tricky!\" \"really tricky\""
+       `shouldBe` fromList [ ["this one"      , "one"          ]
+                           , ["may be tricky!", "really tricky"] ]
 
-      it "checksum 8763" $
-        checksum 8763 `shouldBe` 0
-
-      it "checksum 8739567" $
-        checksum 8739567 `shouldBe` 0
-
-      it "checksum 2323200577663554" $
-        checksum 2323200577663554 `shouldBe` 0
-
-      it "isValid 1111" $
-        isValid 1111 `shouldBe` False
-
-      it "isValid 8763" $
-        isValid 8763 `shouldBe` True
-
-      it "isValid 2323200577663554" $
-        isValid 2323200577663554 `shouldBe` True
-
-      it "create 232320057766355" $
-        create 232320057766355 `shouldBe` 2323200577663554
-
+---- Luhn checksum
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "luhn" $ do
+--    describe "standard tests" $ do
+--
+--      -- Test cases adapted from `exercism/x-common/luhn.json` on
+--      -- 2016-08-04. Some deviations exist and are noted in comments.
+--
+--      it "check digit" $
+--        checkDigit 34567 `shouldBe` 7
+--
+--      it "check digit with input ending in zero" $
+--        checkDigit 91370 `shouldBe` 0
+--
+--      it "check addends" $
+--        addends 12121 `shouldBe` [1, 4, 1, 4, 1]
+--
+--      it "check too large addends" $
+--        addends 8631 `shouldBe` [7, 6, 6, 1]
+--
+--      -- The reference test cases expect the checksum function to return
+--      -- the simple sum of the transformed digits, not their `mod 10` sum.
+--      -- In this track, we insist on the `mod 10`. :)
+--
+--      it "checksum" $
+--        checksum 4913 `shouldBe` 2      -- The reference test expects 22.
+--
+--      it "checksum of larger number" $
+--        checksum 201773 `shouldBe` 1    -- The reference test expects 21.
+--
+--      it "check invalid number" $
+--        isValid 738 `shouldBe` False
+--
+--      it "check valid number" $
+--        isValid 8739567 `shouldBe` True
+--
+--      it "create valid number" $
+--        create 123 `shouldBe` 1230
+--
+--      it "create larger valid number" $
+--        create 873956 `shouldBe` 8739567
+--
+--      it "create even larger valid number" $
+--        create 837263756 `shouldBe` 8372637564
+--
+--    describe "track-specific tests" $ do
+--
+--      -- This track has some tests that were not included in the
+--      -- reference test cases from `exercism/x-common/leap.json`.
+--
+--      it "checksum 1111" $
+--        checksum 1111 `shouldBe` 6
+--
+--      it "checksum 8763" $
+--        checksum 8763 `shouldBe` 0
+--
+--      it "checksum 8739567" $
+--        checksum 8739567 `shouldBe` 0
+--
+--      it "checksum 2323200577663554" $
+--        checksum 2323200577663554 `shouldBe` 0
+--
+--      it "isValid 1111" $
+--        isValid 1111 `shouldBe` False
+--
+--      it "isValid 8763" $
+--        isValid 8763 `shouldBe` True
+--
+--      it "isValid 2323200577663554" $
+--        isValid 2323200577663554 `shouldBe` True
+--
+--      it "create 232320057766355" $
+--        create 232320057766355 `shouldBe` 2323200577663554
+--
 -- Kindergarted Garden
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
