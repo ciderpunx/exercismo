@@ -8,12 +8,15 @@ module Matrix
     , reshape
     , row
     , rows
+    , saddlePoints
     , shape
     , transpose
     ) where
 
 import qualified Data.Vector as V
 import Data.List (group)
+import Data.Maybe (catMaybes)
+import qualified Data.Array as A
 
 data Matrix a = Matrix { cells :: V.Vector a
                        , rows  :: Int
@@ -46,13 +49,13 @@ fromList :: [[a]] -> Matrix a
 fromList xs =
     mkMatrix (rowLength, colLength) (V.fromList $ concat xs)
   where
-    rowLength = length xs
     colLength
       | allSameLength = head lengths
       | null xs       = 0
       | otherwise     = error "Not all rows are the same length!"
     allSameLength = length (group lengths) == 1
-    lengths = map length xs
+    lengths       = map length xs
+    rowLength     = length xs
 
 fromString :: Read a => String -> Matrix a
 fromString s =
@@ -89,6 +92,29 @@ transpose m =
     newC = rows m
     cvs = map (`column` m) [0..cols m-1]
     v   = V.concat cvs
+
+-- I have to implement it this way simply in order to convert the array into a
+-- Vector so that it is consistent with the rest of the API!
+saddlePoints :: Ord a => A.Array (Int,Int) a -> [(Int,Int)]
+saddlePoints arr =
+    saddlePoints' whyIsItNotAFuckingVectorLikeEverythingElse
+  where
+    whyIsItNotAFuckingVectorLikeEverythingElse = mkMatrix (r,c) (V.fromList (A.elems arr))
+    r = 1 + (fst . snd $ A.bounds arr)
+    c = 1 + (snd . snd $ A.bounds arr)
+
+-- This actually solves the problem.
+saddlePoints' :: Ord a => Matrix a -> [(Int,Int)]
+saddlePoints' m =
+    catMaybes $
+      concatMap (\r ->
+          map (\c -> if isSaddle r c then Just (r,c) else Nothing) [0..cs - 1]
+        ) [0..rs - 1]
+  where
+    rs = rows m
+    cs = cols m
+    cellAt (r,c) = row r m V.! c
+    isSaddle r c = all (<= cellAt (r,c)) (row r m) && all (>= cellAt (r,c)) (column c m)
 
 egMatrix :: Matrix Int
 egMatrix = mkMatrix (3,3) (V.fromList [0..8])

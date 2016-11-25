@@ -22,7 +22,7 @@ library
 --                     , AtBash
 --                     , Beer
 --                     , Bob
-                       , Change
+--                     , Change
 --                     , DNA
 --                     , DNACount
 --                     , Etl
@@ -33,7 +33,7 @@ library
 --                     , LinkedList
 --                     , ListOps
 --                     , Luhn
---                     , Matrix
+                     , Matrix
 --                     , Meetup
 --                     , OcrNum
 --                     , Pascal
@@ -61,6 +61,7 @@ library
 
   build-depends:       base >= 4.7 && < 5
                      , containers
+                     , array
                      , split
                      , parsec
                      , time
@@ -83,6 +84,7 @@ test-suite exercismio-test
   main-is:             Tests.hs
   build-depends:       base
                      , HUnit
+                     , array
                      , hspec
                      , time
                      , exercismio
