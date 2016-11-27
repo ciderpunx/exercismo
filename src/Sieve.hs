@@ -7,4 +7,4 @@ primesUpTo n =
 sieve :: [Integer] -> [Integer]
 sieve [] = []
 sieve (x:xs) =
-    x : sieve (filter (\n -> n`mod`x /= 0) xs)
+    x : sieve (filter ((/=0) . (`mod`x)) xs)
