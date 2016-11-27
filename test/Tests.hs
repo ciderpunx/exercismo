@@ -1,11 +1,11 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
--- {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
 import Data.Foldable     (for_)
 --import Data.List         (sort)
-import Data.Array        (listArray)
+-- import Data.Array        (listArray)
 --import Control.Arrow     ((&&&))
 --import qualified Data.Vector as Vector (fromList)
 --import Data.Time.Calendar (fromGregorian)
@@ -124,48 +124,111 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , transpose
 --  )
 -- import Change (findFewestCoins)
-import Matrix (saddlePoints)
+-- import Matrix (saddlePoints)
+import Sieve (primesUpTo)
 
--- Saddle points in a matrix
+-- Sieve of Eratosthenes
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "saddle-points" $
-          describe "saddlePoints" $ for_ cases test
+specs = describe "sieve" $
+          describe "primesUpTo" $ for_ cases test
   where
 
-    test (description, xss, expected) = it description assertion
+    test Case{..} = it description assertion
       where
-        assertion = saddlePoints matrix `shouldBe` expected
-        rows      = length xss
-        columns   = length $ head xss
-        matrix    = listArray ((0, 0), (rows - 1, columns - 1)) (concat xss)
+        assertion = primesUpTo (fromIntegral limit)
+                    `shouldBe`
+                    fromIntegral <$> expected
 
-    -- As of 2016-09-12, there was no reference file
-    -- for the test cases in `exercism/x-common`.
+-- Test cases adapted from `exercism/x-common` on 2016-09-12.
 
-    cases = [ ("Example from README", [ [9, 8, 7]
-                                      , [5, 3, 2]
-                                      , [6, 6, 7] ], [(1, 0)] )
+data Case = Case { description ::  String
+                 , limit       ::  Integer
+                 , expected    :: [Integer]
+                 }
 
-            , ( "no saddle point", [ [2, 1]
-                                   , [1, 2] ], [] )
-
-            , ( "a saddle point", [ [1, 2]
-                                  , [3, 4] ], [(0, 1)] )
-
-            , ( "another saddle point", [ [18,  3, 39, 19,  91]
-                                        , [38, 10,  8, 77, 320]
-                                        , [ 3,  4,  8,  6,   7] ], [(2, 2)] )
-
-            , ("multiple saddle points", [ [4, 5, 4]
-                                         , [3, 5, 5]
-                                         , [1, 5, 4] ], [ (0, 1)
-                                                        , (1, 1)
-                                                        , (2, 1) ] )
-            ]
-
+cases :: [Case]
+cases = [ Case { description = "no primes under two"
+               , limit       =  1
+               , expected    = []
+               }
+        , Case { description = "find first prime"
+               , limit       = 2
+               , expected    = [2]
+               }
+        , Case { description = "find primes up to 10"
+               , limit       = 10
+               , expected    = [2, 3, 5, 7]
+               }
+        , Case { description = "limit is prime"
+               , limit       = 13
+               , expected    = [2, 3, 5, 7, 11, 13]
+               }
+        , Case { description = "find primes up to 1000"
+               , limit       = 1000
+               , expected    = [ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37
+                               , 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83
+                               , 89, 97, 101, 103, 107, 109, 113, 127, 131
+                               , 137, 139, 149, 151, 157, 163, 167, 173, 179
+                               , 181, 191, 193, 197, 199, 211, 223, 227, 229
+                               , 233, 239, 241, 251, 257, 263, 269, 271, 277
+                               , 281, 283, 293, 307, 311, 313, 317, 331, 337
+                               , 347, 349, 353, 359, 367, 373, 379, 383, 389
+                               , 397, 401, 409, 419, 421, 431, 433, 439, 443
+                               , 449, 457, 461, 463, 467, 479, 487, 491, 499
+                               , 503, 509, 521, 523, 541, 547, 557, 563, 569
+                               , 571, 577, 587, 593, 599, 601, 607, 613, 617
+                               , 619, 631, 641, 643, 647, 653, 659, 661, 673
+                               , 677, 683, 691, 701, 709, 719, 727, 733, 739
+                               , 743, 751, 757, 761, 769, 773, 787, 797, 809
+                               , 811, 821, 823, 827, 829, 839, 853, 857, 859
+                               , 863, 877, 881, 883, 887, 907, 911, 919, 929
+                               , 937, 941, 947, 953, 967, 971, 977, 983, 991
+                               , 997 ]
+               }
+        ]
+---- Saddle points in a matrix
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "saddle-points" $
+--          describe "saddlePoints" $ for_ cases test
+--  where
+--
+--    test (description, xss, expected) = it description assertion
+--      where
+--        assertion = saddlePoints matrix `shouldBe` expected
+--        rows      = length xss
+--        columns   = length $ head xss
+--        matrix    = listArray ((0, 0), (rows - 1, columns - 1)) (concat xss)
+--
+--    -- As of 2016-09-12, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    cases = [ ("Example from README", [ [9, 8, 7]
+--                                      , [5, 3, 2]
+--                                      , [6, 6, 7] ], [(1, 0)] )
+--
+--            , ( "no saddle point", [ [2, 1]
+--                                   , [1, 2] ], [] )
+--
+--            , ( "a saddle point", [ [1, 2]
+--                                  , [3, 4] ], [(0, 1)] )
+--
+--            , ( "another saddle point", [ [18,  3, 39, 19,  91]
+--                                        , [38, 10,  8, 77, 320]
+--                                        , [ 3,  4,  8,  6,   7] ], [(2, 2)] )
+--
+--            , ("multiple saddle points", [ [4, 5, 4]
+--                                         , [3, 5, 5]
+--                                         , [1, 5, 4] ], [ (0, 1)
+--                                                        , (1, 1)
+--                                                        , (2, 1) ] )
+--            ]
+--
 ---- change
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs

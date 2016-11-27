@@ -33,7 +33,7 @@ library
 --                     , LinkedList
 --                     , ListOps
 --                     , Luhn
-                     , Matrix
+--                     , Matrix
 --                     , Meetup
 --                     , OcrNum
 --                     , Pascal
@@ -49,6 +49,7 @@ library
 --                     , SecretHandshake
 --                     , Series
 --                     , SpaceAge
+                       , Sieve
 --                     , Strain
 --                     , Sublist
 --                     , SumOfMultiples
