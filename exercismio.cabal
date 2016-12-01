@@ -23,6 +23,7 @@ library
 --                     , Beer
 --                     , Bob
 --                     , Change
+                       , Clock
 --                     , DNA
 --                     , DNACount
 --                     , Etl
@@ -49,7 +50,7 @@ library
 --                     , SecretHandshake
 --                     , Series
 --                     , SpaceAge
-                       , Sieve
+--                     , Sieve
 --                     , Strain
 --                     , Sublist
 --                     , SumOfMultiples
@@ -62,6 +63,7 @@ library
 
   build-depends:       base >= 4.7 && < 5
                      , containers
+                     , data-ordlist
                      , array
                      , split
                      , parsec
