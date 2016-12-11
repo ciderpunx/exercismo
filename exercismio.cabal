@@ -23,7 +23,7 @@ library
 --                     , Beer
 --                     , Bob
 --                     , Change
-                       , Clock
+--                     , Clock
 --                     , DNA
 --                     , DNACount
 --                     , Etl
@@ -43,6 +43,7 @@ library
 --                     , PigLatin
 --                     , PrimeFactors
 --                     , Prime
+                       , Queens
 --                     , Raindrops
 --                     , RobotSimulator
 --                     , School
