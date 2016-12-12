@@ -22,6 +22,7 @@ library
 --                     , AtBash
 --                     , Beer
 --                     , Bob
+                       , BST
 --                     , Change
 --                     , Clock
 --                     , DNA
@@ -43,7 +44,7 @@ library
 --                     , PigLatin
 --                     , PrimeFactors
 --                     , Prime
-                       , Queens
+--                     , Queens
 --                     , Raindrops
 --                     , RobotSimulator
 --                     , School

@@ -127,80 +127,156 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 -- import Matrix (saddlePoints)
 -- import Sieve (primesUpTo)
 -- import Clock (fromHourMin, toString)
-import Queens (boardString, canAttack)
+-- import Queens (boardString, canAttack)
+import BST
+  ( bstLeft
+  , bstRight
+  , bstValue
+  , empty
+  , fromList
+  , insert
+  , singleton
+  , toList
+  )
 
--- Queen attack
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "queen-attack" $ do
+specs = describe "binary-seach-tree" $ do
 
-    -- Track-specific test cases.
+    -- As of 2016-08-03, there was no reference file
+    -- for the test cases in `exercism/x-common`.
 
-    describe "boardString" $ do
+    let int4   = 4  ::  Int
+    let noInts = [] :: [Int]
 
-      it "empty board" $ boardString Nothing Nothing
-        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _" ]
+    it "data is retained" $
+      bstValue (singleton int4) `shouldBe` Just 4
 
-      it "board with just white queen" $ boardString (Just (2, 4)) Nothing
-        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ W _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _" ]
+    it "inserting less" $ do
+      let t = insert 2 (singleton int4)
+      bstValue t `shouldBe` Just 4
+      (bstLeft t >>= bstValue) `shouldBe` Just 2
 
-      it "board with just black queen" $ boardString Nothing (Just (0, 0))
-        `shouldBe` unlines [ "B _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _" ]
+    it "inserting same" $ do
+      let t = insert 4 (singleton int4)
+      bstValue t `shouldBe` Just 4
+      (bstLeft t >>= bstValue) `shouldBe` Just 4
 
-      it "board" $ boardString (Just (2, 4)) (Just (6, 6))
-        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ W _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ _ _"
-                           , "_ _ _ _ _ _ B _"
-                           , "_ _ _ _ _ _ _ _" ]
+    it "inserting right" $ do
+      let t = insert 5 (singleton int4)
+      bstValue t `shouldBe` Just 4
+      (bstRight t >>= bstValue) `shouldBe` Just 5
 
-    -- Test cases adapted from `exercism/x-common/queen-attack.json` on
-    -- 2016-08-02.
-    -- The function described by the reference file as `create` doesn't
-    -- exist in this track, so only the `canAttack` test cases where
-    -- implemented here
+    it "empty list to tree" $
+      fromList noInts `shouldBe` empty
 
-    describe "canAttack" $ do
+    it "empty list has no value" $
+      bstValue (fromList noInts) `shouldBe` Nothing
 
-      let test (description, white, black, expected) =
-            it description $ canAttack white black `shouldBe` expected
+    it "inserting into empty" $ do
+      let t = insert int4 empty
+      bstValue t `shouldBe` Just 4
 
-          cases = [ ("can not attack"               , (2, 4), (6, 6), False)
-                  , ("can attack on same rank"      , (2, 4), (2, 6), True )
-                  , ("can attack on same file"      , (4, 5), (2, 5), True )
-                  , ("can attack on first diagonal" , (2, 2), (0, 4), True )
-                  , ("can attack on second diagonal", (2, 2), (3, 1), True )
-                  , ("can attack on third diagonal" , (2, 2), (1, 1), True )
-                  , ("can attack on fourth diagonal", (2, 2), (5, 5), True ) ]
+    it "complex tree" $ do
+      let t = fromList [int4, 2, 6, 1, 3, 7, 5]
+      bstValue  t                            `shouldBe` Just 4
+      (bstLeft  t >>= bstValue             ) `shouldBe` Just 2
+      (bstLeft  t >>= bstLeft  >>= bstValue) `shouldBe` Just 1
+      (bstLeft  t >>= bstRight >>= bstValue) `shouldBe` Just 3
+      (bstRight t >>= bstValue             ) `shouldBe` Just 6
+      (bstRight t >>= bstLeft  >>= bstValue) `shouldBe` Just 5
+      (bstRight t >>= bstRight >>= bstValue) `shouldBe` Just 7
 
-      for_ cases test
+    it "empty tree to list" $
+      length (toList empty) `shouldBe` 0
 
+    it "iterating one element" $
+      toList (singleton int4) `shouldBe` [4]
+
+    it "iterating over smaller element" $
+      toList (fromList [int4, 2]) `shouldBe` [2, 4]
+
+    it "iterating over larger element" $
+      toList (fromList [int4, 5]) `shouldBe` [4, 5]
+
+    it "iterating over complex tree" $
+      toList (fromList [int4, 2, 1, 3, 6, 7, 5]) `shouldBe` [1..7]
+
+
+-- Queen attack
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "queen-attack" $ do
+--
+--    -- Track-specific test cases.
+--
+--    describe "boardString" $ do
+--
+--      it "empty board" $ boardString Nothing Nothing
+--        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _" ]
+--
+--      it "board with just white queen" $ boardString (Just (2, 4)) Nothing
+--        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ W _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _" ]
+--
+--      it "board with just black queen" $ boardString Nothing (Just (0, 0))
+--        `shouldBe` unlines [ "B _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _" ]
+--
+--      it "board" $ boardString (Just (2, 4)) (Just (6, 6))
+--        `shouldBe` unlines [ "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ W _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ _ _"
+--                           , "_ _ _ _ _ _ B _"
+--                           , "_ _ _ _ _ _ _ _" ]
+--
+--    -- Test cases adapted from `exercism/x-common/queen-attack.json` on
+--    -- 2016-08-02.
+--    -- The function described by the reference file as `create` doesn't
+--    -- exist in this track, so only the `canAttack` test cases where
+--    -- implemented here
+--
+--    describe "canAttack" $ do
+--
+--      let test (description, white, black, expected) =
+--            it description $ canAttack white black `shouldBe` expected
+--
+--          cases = [ ("can not attack"               , (2, 4), (6, 6), False)
+--                  , ("can attack on same rank"      , (2, 4), (2, 6), True )
+--                  , ("can attack on same file"      , (4, 5), (2, 5), True )
+--                  , ("can attack on first diagonal" , (2, 2), (0, 4), True )
+--                  , ("can attack on second diagonal", (2, 2), (3, 1), True )
+--                  , ("can attack on third diagonal" , (2, 2), (1, 1), True )
+--                  , ("can attack on fourth diagonal", (2, 2), (5, 5), True ) ]
+--
+--      for_ cases test
+--
 -- Clock
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
