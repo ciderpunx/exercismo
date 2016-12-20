@@ -22,9 +22,10 @@ library
 --                     , AtBash
 --                     , Beer
 --                     , Bob
-                       , BST
+--                     , BST
 --                     , Change
 --                     , Clock
+                       , CustomSet
 --                     , DNA
 --                     , DNACount
 --                     , Etl
