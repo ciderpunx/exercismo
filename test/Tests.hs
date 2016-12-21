@@ -186,42 +186,42 @@ specs = describe "custom-set" $ do
         it "when the element is not in the set" $
           4 `member` fromList [1, 2, 3] `shouldBe` False
 
---      describe "isSubsetOf" $ do
---
---        it "empty set is a subset of another empty set" $
---          fromList ([] :: [Integer]) `isSubsetOf` fromList [] `shouldBe` True
---
---        it "empty set is a subset of non-empty set" $
---          fromList [] `isSubsetOf` fromList [1] `shouldBe` True
---
---        it "non-empty set is not a subset of empty set" $
---          fromList [1] `isSubsetOf` fromList [] `shouldBe` False
---
---        it "set is a subset of set with exact same elements" $
---          fromList [1, 2, 3] `isSubsetOf` fromList [1, 2, 3] `shouldBe` True
---
---        it "set is a subset of larger set with same elements" $
---          fromList [1, 2, 3] `isSubsetOf` fromList [4, 1, 2, 3] `shouldBe` True
---
---        it "set is not a subset of set that does not contain its elements" $
---          fromList [1, 2, 3] `isSubsetOf` fromList [4, 1, 3] `shouldBe` False
---
---      describe "isDisjointFrom" $ do
---
---        it "the empty set is disjoint with itself" $
---          fromList ([] :: [Integer]) `isDisjointFrom` fromList [] `shouldBe` True
---
---        it "empty set is disjoint with non-empty set" $
---          fromList [] `isDisjointFrom` fromList [1] `shouldBe` True
---
---        it "non-empty set is disjoint with empty set" $
---          fromList [1] `isDisjointFrom` fromList [] `shouldBe` True
---
---        it "sets are not disjoint if they share an element" $
---          fromList [1, 2] `isDisjointFrom` fromList [2, 3] `shouldBe` False
---
---        it "sets are disjoint if they share no elements" $
---          fromList [1, 2] `isDisjointFrom` fromList [3, 4] `shouldBe` True
+      describe "isSubsetOf" $ do
+
+        it "empty set is a subset of another empty set" $
+          fromList ([] :: [Integer]) `isSubsetOf` fromList [] `shouldBe` True
+
+        it "empty set is a subset of non-empty set" $
+          fromList [] `isSubsetOf` fromList [1] `shouldBe` True
+
+        it "non-empty set is not a subset of empty set" $
+          fromList [1] `isSubsetOf` fromList [] `shouldBe` False
+
+        it "set is a subset of set with exact same elements" $
+          fromList [1, 2, 3] `isSubsetOf` fromList [1, 2, 3] `shouldBe` True
+
+        it "set is a subset of larger set with same elements" $
+          fromList [1, 2, 3] `isSubsetOf` fromList [4, 1, 2, 3] `shouldBe` True
+
+        it "set is not a subset of set that does not contain its elements" $
+          fromList [1, 2, 3] `isSubsetOf` fromList [4, 1, 3] `shouldBe` False
+
+      describe "isDisjointFrom" $ do
+
+        it "the empty set is disjoint with itself" $
+          fromList ([] :: [Integer]) `isDisjointFrom` fromList [] `shouldBe` True
+
+        it "empty set is disjoint with non-empty set" $
+          fromList [] `isDisjointFrom` fromList [1] `shouldBe` True
+
+        it "non-empty set is disjoint with empty set" $
+          fromList [1] `isDisjointFrom` fromList [] `shouldBe` True
+
+        it "sets are not disjoint if they share an element" $
+          fromList [1, 2] `isDisjointFrom` fromList [2, 3] `shouldBe` False
+
+        it "sets are disjoint if they share no elements" $
+          fromList [1, 2] `isDisjointFrom` fromList [3, 4] `shouldBe` True
 
       describe "Eq" $ do
 
@@ -251,22 +251,22 @@ specs = describe "custom-set" $ do
         it "adding an existing element does not change the set" $
           insert 3 (fromList [1, 2, 3]) `shouldBe` fromList [1, 2, 3]
 
---      describe "intersection" $ do
---
---        it "intersection of two empty sets is an empty set" $
---          fromList ([] :: [Integer]) `intersection` fromList [] `shouldBe` fromList []
---
---        it "intersection of an empty set and non-empty set is an empty set" $
---          fromList [] `intersection` fromList [3, 2, 5] `shouldBe` fromList []
---
---        it "intersection of a non-empty set and an empty set is an empty set" $
---          fromList [1, 2, 3, 4] `intersection` fromList [] `shouldBe` fromList []
---
---        it "intersection of two sets with no shared elements is an empty set" $
---          fromList [1, 2, 3] `intersection` fromList [4, 5, 6] `shouldBe` fromList []
---
---        it "intersection of two sets with shared elements is a set of the shared elements" $
---          fromList [1, 2, 3, 4] `intersection` fromList [3, 2, 5] `shouldBe` fromList [2, 3]
+      describe "intersection" $ do
+
+        it "intersection of two empty sets is an empty set" $
+          fromList ([] :: [Integer]) `intersection` fromList [] `shouldBe` fromList []
+
+        it "intersection of an empty set and non-empty set is an empty set" $
+          fromList [] `intersection` fromList [3, 2, 5] `shouldBe` fromList []
+
+        it "intersection of a non-empty set and an empty set is an empty set" $
+          fromList [1, 2, 3, 4] `intersection` fromList [] `shouldBe` fromList []
+
+        it "intersection of two sets with no shared elements is an empty set" $
+          fromList [1, 2, 3] `intersection` fromList [4, 5, 6] `shouldBe` fromList []
+
+        it "intersection of two sets with shared elements is a set of the shared elements" $
+          fromList [1, 2, 3, 4] `intersection` fromList [3, 2, 5] `shouldBe` fromList [2, 3]
 
       describe "difference" $ do
 
@@ -282,19 +282,19 @@ specs = describe "custom-set" $ do
         it "difference of two non-empty sets is a set of elements that are only in the first set" $
           fromList [3, 2, 1] `difference` fromList [2, 4] `shouldBe` fromList [1, 3]
 
---      describe "union" $ do
---
---        it "union of empty sets is an empty set" $
---          fromList ([] :: [Integer]) `union` fromList [] `shouldBe` fromList []
---
---        it "union of an empty set and non-empty set is the non-empty set" $
---          fromList [] `union` fromList [2] `shouldBe` fromList [2]
---
---        it "union of a non-empty set and empty set is the non-empty set" $
---          fromList [1, 3] `union` fromList [] `shouldBe` fromList [1, 3]
---
---        it "union of non-empty sets contains all unique elements" $
---          fromList [1, 3] `union` fromList [2, 3] `shouldBe` fromList [3, 2, 1]
+      describe "union" $ do
+
+        it "union of empty sets is an empty set" $
+          fromList ([] :: [Integer]) `union` fromList [] `shouldBe` fromList []
+
+        it "union of an empty set and non-empty set is the non-empty set" $
+          fromList [] `union` fromList [2] `shouldBe` fromList [2]
+
+        it "union of a non-empty set and empty set is the non-empty set" $
+          fromList [1, 3] `union` fromList [] `shouldBe` fromList [1, 3]
+
+        it "union of non-empty sets contains all unique elements" $
+          fromList [1, 3] `union` fromList [2, 3] `shouldBe` fromList [3, 2, 1]
 
     describe "track-specific tests" $ do
 
