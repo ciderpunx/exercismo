@@ -25,10 +25,11 @@ library
 --                     , BST
 --                     , Change
 --                     , Clock
-                       , CustomSet
+--                     , CustomSet
 --                     , DNA
 --                     , DNACount
 --                     , Etl
+                       , Frequency
 --                     , FoodChain
 --                     , Garden
 --                     , Grains
@@ -65,12 +66,15 @@ library
 --                     , Wordy2
 
   build-depends:       base >= 4.7 && < 5
+                     , array
                      , containers
                      , data-ordlist
-                     , array
+                     , deepseq
                      , split
                      , parsec
+                     , parallel
                      , time
+                     , text
                      , digits
                      , mtl
                      , vector
@@ -93,6 +97,7 @@ test-suite exercismio-test
                      , array
                      , hspec
                      , time
+                     , text
                      , exercismio
                      , containers
                      , split
