@@ -29,7 +29,7 @@ library
 --                     , DNA
 --                     , DNACount
 --                     , Etl
-                       , Frequency
+--                       , Frequency
 --                     , FoodChain
 --                     , Garden
 --                     , Grains
@@ -49,6 +49,7 @@ library
 --                     , Queens
 --                     , Raindrops
 --                     , RobotSimulator
+                       , RunLength
 --                     , School
 --                     , Scrabble
 --                     , SecretHandshake

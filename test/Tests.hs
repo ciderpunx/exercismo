@@ -1,6 +1,6 @@
 -- {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 {-# LANGUAGE OverloadedStrings #-}
--- {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 -- {-# LANGUAGE DeriveAnyClass #-}
 --import Test.HUnit (Assertion, (@=?), runTestTT, Test(..), Counts(..))
 --import System.Exit (ExitCode(..), exitWith)
@@ -155,84 +155,155 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --  , toList
 --  , union
 --  )
-import Data.Map          (empty, fromList, lookup, singleton)
-import Data.Text         (concat)
-import Prelude    hiding (concat, lookup)
-import Frequency (frequency)
+--import Data.Map          (empty, fromList, lookup, singleton)
+--import Data.Text         (concat)
+--import Prelude    hiding (concat, lookup)
+--import Frequency (frequency)
+import RunLength (encode, decode)
 
--- Parallel letter frequency
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "parallel-letter-frequency" $ do
-    -- As of 2016-09-16, there was no reference file
-    -- for the test cases in `exercism/x-common`.
+specs = describe "run-length-encoding" $ do
+          describe "decode" $ for_ decodeCases $ test decode
+          describe "encode" $ for_ encodeCases $ test encode
+          describe "both"   $ for_ bothCases   $ test (decode . encode)
+  where
+    test f Case{..} = it description $ f input `shouldBe` expected
 
-    let odeAnDieFreude = concat             -- Poem by Friedrich Schiller.
-          [ "Freude schöner Götterfunken"   -- The corresponding music is
-          , "Tochter aus Elysium,"          -- the European Anthem.
-          , "Wir betreten feuertrunken,"
-          , "Himmlische, dein Heiligtum!"
-          , "Deine Zauber binden wieder"
-          , "Was die Mode streng geteilt;"
-          , "Alle Menschen werden Brüder,"
-          , "Wo dein sanfter Flügel weilt."
-          ]
-        starSpangledBanner = concat         -- American national anthem
-          [ "O say can you see by the dawn's early light,"
-          , "What so proudly we hailed at the twilight's last gleaming,"
-          , "Whose broad stripes and bright stars through the perilous fight,"
-          , "O'er the ramparts we watched, were so gallantly streaming?"
-          , "And the rockets' red glare, the bombs bursting in air,"
-          , "Gave proof through the night that our flag was still there;"
-          , "O say does that star-spangled banner yet wave,"
-          , "O'er the land of the free and the home of the brave?"
-          ]
-        wilhelmus = concat                  -- Dutch national anthem
-          [ "Wilhelmus van Nassouwe"
-          , "ben ik, van Duitsen bloed,"
-          , "den vaderland getrouwe"
-          , "blijf ik tot in den dood."
-          , "Een Prinse van Oranje"
-          , "ben ik, vrij, onverveerd,"
-          , "den Koning van Hispanje"
-          , "heb ik altijd geëerd."
-          ]
-        anthems = [odeAnDieFreude, starSpangledBanner, wilhelmus]
+-- Test cases adapted from file
+-- `exercism/x-common/exercises/run-length-encoding/canonical-data.json`
+-- on 2016-12-26.
 
-    describe "frequency" $ do
+data Case = Case { description :: String
+                 , input       :: String
+                 , expected    :: String
+                 }
 
-      it "no texts mean no letters" $
-        frequency 1 [] `shouldBe` empty
+encodeCases :: [Case]
+encodeCases =
+    [ Case { description = "encode empty string"
+           , input       = ""
+           , expected    = ""
+           }
+    , Case { description = "encode single characters only"
+           , input       = "XYZ"
+           , expected    = "XYZ"
+           }
+    , Case { description = "encode simple"
+           , input       = "AABBBCCCC"
+           , expected    = "2A3B4C"
+           }
+    , Case { description = "encode with single values"
+           , input       = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
+           , expected    = "12WB12W3B24WB"
+           }
+    ]
 
-      it "one letter" $
-        frequency 1 ["a"] `shouldBe` singleton 'a' 1
+decodeCases :: [Case]
+decodeCases =
+    [ Case { description = "decode empty string"
+           , input       = ""
+           , expected    = ""
+           }
+    , Case { description = "decode single characters only"
+           , input       = "XYZ"
+           , expected    = "XYZ"
+           }
+    , Case { description = "decode simple"
+           , input       = "2A3B4C"
+           , expected    = "AABBBCCCC"
+           }
+    , Case { description = "decode with single values"
+           , input       = "12WB12W3B24WB"
+           , expected    = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
+           }
+    ]
 
-      it "case insensitivity" $
-        frequency 1 ["aA"] `shouldBe` singleton 'a' 2
+bothCases :: [Case]
+bothCases =
+    [ Case { description = "decode . encode combination"
+           , input       = "zzz ZZ  zZ"
+           , expected    = "zzz ZZ  zZ"
+           }
+    ]
 
-      it "many empty texts still mean no letters" $
-        frequency 1 (replicate 10000 "  ") `shouldBe` empty
 
-      it "many times the same text gives a predictable result" $
-        frequency 1 (replicate 1000 "abc") `shouldBe` fromList [ ('a', 1000)
-                                                               , ('b', 1000)
-                                                               , ('c', 1000) ]
 
-      it "punctuation doesn't count" $
-        lookup ',' (frequency 1 [odeAnDieFreude]) `shouldBe` Nothing
-
-      it "numbers don't count" $
-        lookup '1' (frequency 1 ["Testing, 1, 2, 3"]) `shouldBe` Nothing
-
-      let testAllAnthems n = do
-            let frequencies = frequency n anthems
-            lookup 'a' frequencies `shouldBe` Just 49
-            lookup 't' frequencies `shouldBe` Just 56
-            lookup 'ü' frequencies `shouldBe` Just  2
-
-      it "all three anthems, together, 1 worker" $ testAllAnthems 1
+-- Parallel letter frequency
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "parallel-letter-frequency" $ do
+--    -- As of 2016-09-16, there was no reference file
+--    -- for the test cases in `exercism/x-common`.
+--
+--    let odeAnDieFreude = concat             -- Poem by Friedrich Schiller.
+--          [ "Freude schöner Götterfunken"   -- The corresponding music is
+--          , "Tochter aus Elysium,"          -- the European Anthem.
+--          , "Wir betreten feuertrunken,"
+--          , "Himmlische, dein Heiligtum!"
+--          , "Deine Zauber binden wieder"
+--          , "Was die Mode streng geteilt;"
+--          , "Alle Menschen werden Brüder,"
+--          , "Wo dein sanfter Flügel weilt."
+--          ]
+--        starSpangledBanner = concat         -- American national anthem
+--          [ "O say can you see by the dawn's early light,"
+--          , "What so proudly we hailed at the twilight's last gleaming,"
+--          , "Whose broad stripes and bright stars through the perilous fight,"
+--          , "O'er the ramparts we watched, were so gallantly streaming?"
+--          , "And the rockets' red glare, the bombs bursting in air,"
+--          , "Gave proof through the night that our flag was still there;"
+--          , "O say does that star-spangled banner yet wave,"
+--          , "O'er the land of the free and the home of the brave?"
+--          ]
+--        wilhelmus = concat                  -- Dutch national anthem
+--          [ "Wilhelmus van Nassouwe"
+--          , "ben ik, van Duitsen bloed,"
+--          , "den vaderland getrouwe"
+--          , "blijf ik tot in den dood."
+--          , "Een Prinse van Oranje"
+--          , "ben ik, vrij, onverveerd,"
+--          , "den Koning van Hispanje"
+--          , "heb ik altijd geëerd."
+--          ]
+--        anthems = [odeAnDieFreude, starSpangledBanner, wilhelmus]
+--
+--    describe "frequency" $ do
+--
+--      it "no texts mean no letters" $
+--        frequency 1 [] `shouldBe` empty
+--
+--      it "one letter" $
+--        frequency 1 ["a"] `shouldBe` singleton 'a' 1
+--
+--      it "case insensitivity" $
+--        frequency 1 ["aA"] `shouldBe` singleton 'a' 2
+--
+--      it "many empty texts still mean no letters" $
+--        frequency 1 (replicate 10000 "  ") `shouldBe` empty
+--
+--      it "many times the same text gives a predictable result" $
+--        frequency 1 (replicate 1000 "abc") `shouldBe` fromList [ ('a', 1000)
+--                                                               , ('b', 1000)
+--                                                               , ('c', 1000) ]
+--
+--      it "punctuation doesn't count" $
+--        lookup ',' (frequency 1 [odeAnDieFreude]) `shouldBe` Nothing
+--
+--      it "numbers don't count" $
+--        lookup '1' (frequency 1 ["Testing, 1, 2, 3"]) `shouldBe` Nothing
+--
+--      let testAllAnthems n = do
+--            let frequencies = frequency n anthems
+--            lookup 'a' frequencies `shouldBe` Just 49
+--            lookup 't' frequencies `shouldBe` Just 56
+--            lookup 'ü' frequencies `shouldBe` Just  2
+--
+--      it "all three anthems, together, 1 worker" $ testAllAnthems 1
 
 -- Custom Set
 --main :: IO ()
