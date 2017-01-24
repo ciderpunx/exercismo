@@ -1,16 +1,38 @@
 module Say where
-import Data.List (splitAt)
 
+inEnglish :: Int -> String
+inEnglish x =
+    if x < 0
+    then error "Positive numbers only please"
+    else sayPos x
+
+sayPos :: Int -> String
+sayPos x =
+    if x == 0
+    then "zero"
+    else concat . toUnits $ listify x
+
+-- TODO: yuk
+listify =
+    reverse . map reverse . chunksOf 3 . reverse . show
+
+addAnd :: [String] -> String
+addAnd = concat
+--    | length xs < 3 = concat xs
+--    | otherwise     = concat $ init xs ++ [ " and ", last xs ]
+
+toUnits :: [String] -> [String]
 toUnits [] = []
 toUnits (x:xs) =
     case length xs of
-      3 -> (show x ++ " million ")  : toUnits xs
-      2 -> (show x ++ " thousand ") : toUnits xs
-      1 -> (show x ++ " hundred ")  : toUnits xs
-      0 -> [show x]
+      3 -> (toWords x ++ " billion ")   : toUnits xs
+      2 -> (toWords x ++ " million ")   : toUnits xs
+      1 -> (toWords x ++ " thousand ")  : toUnits xs
+      0 -> [toWords x]
 
 toWords [] = []
 toWords (x:[])
+  | x == '0' = ""
   | x == '1' = "one"
   | x == '2' = "two"
   | x == '3' = "three"
@@ -46,6 +68,10 @@ toWords (x:y:[])
   | x     == '8'  = "eighty-" ++ toWords [y]
   | [x,y] == "90" = "ninety"
   | x     == '9'  = "ninety-" ++ toWords [y]
+toWords (x:y:z:[])
+  | [x,y,z] == [x,'0','0'] = toWords [x] ++ " hundred"
+  | otherwise              = toWords [x] ++ " hundred and " ++ toWords [y,z]
+toWords _ = error "toWords only works for numbers up to 999"
 
 chunksOf :: Int -> String -> [String]
 chunksOf n xs
