@@ -1,35 +1,35 @@
-module Say where
+module Say (inEnglish) where
 
-inEnglish :: Int -> String
+inEnglish :: Int -> Maybe String
 inEnglish x =
     if x < 0
-    then error "Positive numbers only please"
+    then Nothing
     else sayPos x
 
-sayPos :: Int -> String
+sayPos :: Int -> Maybe String
 sayPos x =
     if x == 0
-    then "zero"
-    else concat . toUnits $ listify x
+    then Just "zero"
+    else Just .  unwords . filter (not . null) . toUnits $ listify x
 
--- TODO: yuk
+listify :: Int -> [String]
 listify =
     reverse . map reverse . chunksOf 3 . reverse . show
-
-addAnd :: [String] -> String
-addAnd = concat
---    | length xs < 3 = concat xs
---    | otherwise     = concat $ init xs ++ [ " and ", last xs ]
 
 toUnits :: [String] -> [String]
 toUnits [] = []
 toUnits (x:xs) =
     case length xs of
-      3 -> (toWords x ++ " billion ")   : toUnits xs
-      2 -> (toWords x ++ " million ")   : toUnits xs
-      1 -> (toWords x ++ " thousand ")  : toUnits xs
-      0 -> [toWords x]
+      3 -> appendUnit " billion"   : toUnits xs
+      2 -> appendUnit " million"   : toUnits xs
+      1 -> appendUnit " thousand"  : toUnits xs
+      0 -> [appendUnit ""]
+  where
+    appendUnit u = if null (toWords x)
+                   then ""
+                   else toWords x ++ u
 
+toWords :: String -> String
 toWords [] = []
 toWords (x:[])
   | x == '0' = ""
@@ -43,6 +43,8 @@ toWords (x:[])
   | x == '8' = "eight"
   | x == '9' = "nine"
 toWords (x:y:[])
+  | x == '0'      = toWords [y]
+  | [x,y] == "10" = "ten"
   | [x,y] == "11" = "eleven"
   | [x,y] == "12" = "twelve"
   | [x,y] == "13" = "thirteen"
@@ -69,8 +71,10 @@ toWords (x:y:[])
   | [x,y] == "90" = "ninety"
   | x     == '9'  = "ninety-" ++ toWords [y]
 toWords (x:y:z:[])
+  | x == '0'      = toWords [y,z]
   | [x,y,z] == [x,'0','0'] = toWords [x] ++ " hundred"
-  | otherwise              = toWords [x] ++ " hundred and " ++ toWords [y,z]
+--  | otherwise              = toWords [x] ++ " hundred and " ++ toWords [y,z] -- British English version adds an and
+  | otherwise              = toWords [x] ++ " hundred " ++ toWords [y,z]
 toWords _ = error "toWords only works for numbers up to 999"
 
 chunksOf :: Int -> String -> [String]

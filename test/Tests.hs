@@ -159,78 +159,120 @@ import Test.Hspec.Runner (configFastFail, defaultConfig, hspecWith)
 --import Data.Text         (concat)
 --import Prelude    hiding (concat, lookup)
 --import Frequency (frequency)
-import RunLength (encode, decode)
+--import RunLength (encode, decode)
+import Say (inEnglish)
 
 main :: IO ()
 main = hspecWith defaultConfig {configFastFail = True} specs
 
 specs :: Spec
-specs = describe "run-length-encoding" $ do
-          describe "decode" $ for_ decodeCases $ test decode
-          describe "encode" $ for_ encodeCases $ test encode
-          describe "both"   $ for_ bothCases   $ test (decode . encode)
+specs = describe "say" $
+          describe "inEnglish" $ for_ cases test
   where
-    test f Case{..} = it description $ f input `shouldBe` expected
 
--- Test cases adapted from file
--- `exercism/x-common/exercises/run-length-encoding/canonical-data.json`
--- on 2016-12-26.
+    test (n, expected) = it description assertion
+      where
+        description = show n
+        assertion   = inEnglish n `shouldBe` expected
 
-data Case = Case { description :: String
-                 , input       :: String
-                 , expected    :: String
-                 }
+    -- Test cases adapted from `exercism/x-common/say` on 2016-11-06.
 
-encodeCases :: [Case]
-encodeCases =
-    [ Case { description = "encode empty string"
-           , input       = ""
-           , expected    = ""
-           }
-    , Case { description = "encode single characters only"
-           , input       = "XYZ"
-           , expected    = "XYZ"
-           }
-    , Case { description = "encode simple"
-           , input       = "AABBBCCCC"
-           , expected    = "2A3B4C"
-           }
-    , Case { description = "encode with single values"
-           , input       = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
-           , expected    = "12WB12W3B24WB"
-           }
-    ]
-
-decodeCases :: [Case]
-decodeCases =
-    [ Case { description = "decode empty string"
-           , input       = ""
-           , expected    = ""
-           }
-    , Case { description = "decode single characters only"
-           , input       = "XYZ"
-           , expected    = "XYZ"
-           }
-    , Case { description = "decode simple"
-           , input       = "2A3B4C"
-           , expected    = "AABBBCCCC"
-           }
-    , Case { description = "decode with single values"
-           , input       = "12WB12W3B24WB"
-           , expected    = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
-           }
-    ]
-
-bothCases :: [Case]
-bothCases =
-    [ Case { description = "decode . encode combination"
-           , input       = "zzz ZZ  zZ"
-           , expected    = "zzz ZZ  zZ"
-           }
-    ]
+    cases = [ (            0, Just "zero"                                )
+            , (            1, Just "one"                                 )
+            , (           14, Just "fourteen"                            )
+            , (           20, Just "twenty"                              )
+            , (           22, Just "twenty-two"                          )
+            , (          100, Just "one hundred"                         )
+            , (          123, Just "one hundred twenty-three"            )
+            , (         1000, Just "one thousand"                        )
+            , (         1234, Just "one thousand two hundred thirty-four")
+            , (      1000000, Just "one million"                         )
+            , (      1000002, Just "one million two"                     )
+            , (      1002345, Just "one million two thousand three \
+                                   \hundred forty-five"                  )
+            , (   1000000000, Just "one billion"                         )
+            , ( 987654321123, Just "nine hundred eighty-seven billion \
+                                   \six hundred fifty-four million \
+                                   \three hundred twenty-one thousand \
+                                   \one hundred twenty-three"            )
+            , (           -1, Nothing                                    )
+         -- Even though the x-common tests have this case,
+         -- we decide not to test it, to give freedom to go to trillions if desired.
+         -- , (1000000000000, Nothing                                    )
+            ]
 
 
 
+--main :: IO ()
+--main = hspecWith defaultConfig {configFastFail = True} specs
+--
+--specs :: Spec
+--specs = describe "run-length-encoding" $ do
+--          describe "decode" $ for_ decodeCases $ test decode
+--          describe "encode" $ for_ encodeCases $ test encode
+--          describe "both"   $ for_ bothCases   $ test (decode . encode)
+--  where
+--    test f Case{..} = it description $ f input `shouldBe` expected
+--
+---- Test cases adapted from file
+---- `exercism/x-common/exercises/run-length-encoding/canonical-data.json`
+---- on 2016-12-26.
+--
+--data Case = Case { description :: String
+--                 , input       :: String
+--                 , expected    :: String
+--                 }
+--
+--encodeCases :: [Case]
+--encodeCases =
+--    [ Case { description = "encode empty string"
+--           , input       = ""
+--           , expected    = ""
+--           }
+--    , Case { description = "encode single characters only"
+--           , input       = "XYZ"
+--           , expected    = "XYZ"
+--           }
+--    , Case { description = "encode simple"
+--           , input       = "AABBBCCCC"
+--           , expected    = "2A3B4C"
+--           }
+--    , Case { description = "encode with single values"
+--           , input       = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
+--           , expected    = "12WB12W3B24WB"
+--           }
+--    ]
+--
+--decodeCases :: [Case]
+--decodeCases =
+--    [ Case { description = "decode empty string"
+--           , input       = ""
+--           , expected    = ""
+--           }
+--    , Case { description = "decode single characters only"
+--           , input       = "XYZ"
+--           , expected    = "XYZ"
+--           }
+--    , Case { description = "decode simple"
+--           , input       = "2A3B4C"
+--           , expected    = "AABBBCCCC"
+--           }
+--    , Case { description = "decode with single values"
+--           , input       = "12WB12W3B24WB"
+--           , expected    = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
+--           }
+--    ]
+--
+--bothCases :: [Case]
+--bothCases =
+--    [ Case { description = "decode . encode combination"
+--           , input       = "zzz ZZ  zZ"
+--           , expected    = "zzz ZZ  zZ"
+--           }
+--    ]
+--
+--
+--
 -- Parallel letter frequency
 --main :: IO ()
 --main = hspecWith defaultConfig {configFastFail = True} specs
