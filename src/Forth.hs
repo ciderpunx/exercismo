@@ -1,9 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Forth where
+
 import Control.Monad (void)
 import Text.Megaparsec
 import Text.Megaparsec.Expr
-import Text.Megaparsec.String
+import Text.Megaparsec.Text
 import qualified Text.Megaparsec.Lexer as L
+import qualified Data.Text as T
 
 data Err = DivisionByZero
          | StackUnderflow
@@ -11,11 +15,50 @@ data Err = DivisionByZero
          | UnknownWord String 
          deriving Show
 
---type Stack = [Int]
-
 data ForthState = Empty
                 | S [Int]
                 deriving (Show, Eq)
+
+data Exp = RWord T.Text
+         | Num Int
+         | BinExp BinOp
+
+data BinOp = Plus Exp Exp
+           | Minus Exp Exp
+           | Div Exp Exp
+           | Mul Exp Exp
+
+
+
+sc :: Parser ()
+sc = L.space (void spaceChar) (L.skipLineComment "//") (L.skipBlockComment "/*" "*/")
+
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
+
+symbol :: T.Text -> Parser T.Text
+symbol t = do
+    s <- L.symbol sc $ T.unpack t
+    return (T.pack s)
+
+integer :: Parser Integer
+integer = lexeme L.integer
+
+reservedWord :: T.Text -> Parser ()
+reservedWord w = string (T.unpack w) *> notFollowedBy alphaNumChar *> sc
+
+reservedWords :: [T.Text]
+reservedWords = ["dup", "drop", "swap", "over"]
+
+-- TODO: type error
+--identifier :: Parser T.Text
+--identifier =
+--    (lexeme . try) (p >>= check)
+--  where
+--    p       = (:) <$> letterChar <*> many alphaNumChar
+--    check x = if x `elem` reservedWords
+--              then fail $ "keyword " ++ show x ++ " cannot be an identifier"
+--              else return x
 
 toList Empty  = []
 toList (S xs) = xs
