@@ -2,108 +2,128 @@
 
 module Forth where
 
-import Control.Monad (void)
-import Text.Megaparsec
-import Text.Megaparsec.Expr
-import Text.Megaparsec.Text
-import qualified Text.Megaparsec.Lexer as L
-import qualified Data.Text as T
+import Control.Monad (foldM)
+import Text.Parsec hiding (Empty)
+import Prelude hiding (subtract)
+import Text.ParserCombinators.Parsec.Number
 
-data Err = DivisionByZero
+data ForthError = DivisionByZero
          | StackUnderflow
          | InvalidWord
-         | UnknownWord String 
+         | UnknownWord String
          deriving Show
 
-data ForthState = Empty
-                | S [Int]
-                deriving (Show, Eq)
+data ForthState = S ([(String,Token)], [Int]) deriving Show
 
-data Exp = RWord T.Text
-         | Num Int
-         | BinExp BinOp
+data Token = BinOp Op
+           | RWord String
+           | Def Token [Token]
+           | Num Int
+           deriving Show
 
-data BinOp = Plus Exp Exp
-           | Minus Exp Exp
-           | Div Exp Exp
-           | Mul Exp Exp
+data Op = Plus
+        | Minus
+        | Mul
+        | Div
+        deriving Show
+
+eval str =
+    let ts = parse progP "" str
+    in case ts of
+      Left p -> error $ "Parse error: " ++ show p
+      Right tokens -> foldM evalTok empty tokens
+
+evalTok :: ForthState -> Token -> Either ForthError ForthState
+evalTok (S (env, ss)) (Num x) = Right $ S (env, x:ss)
+evalTok ss (BinOp Plus)       = add ss
+evalTok ss (BinOp Minus)      = subtract ss
+evalTok ss (BinOp Mul)        = multiply ss
+evalTok ss (BinOp Div)        = divide ss
+evalTok ss (RWord "dup")      = dup ss
+evalTok ss (RWord "drop")     = drp ss
+evalTok ss (RWord "swap")     = swp ss
+-- evalTok (S (env, ss)) (RWord w) = undefined -- see if word is in the env
+evalTok ss (RWord xs)         = Left $ UnknownWord xs
 
 
 
-sc :: Parser ()
-sc = L.space (void spaceChar) (L.skipLineComment "//") (L.skipBlockComment "/*" "*/")
+empty = S ([],[])
 
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme sc
+progP :: Parsec String () [Token]
+progP = do
+    tokens <- tokeP `sepEndBy` spaces
+    _ <- eof
+    return tokens
 
-symbol :: T.Text -> Parser T.Text
-symbol t = do
-    s <- L.symbol sc $ T.unpack t
-    return (T.pack s)
+tokeP :: Parsec String () Token
+tokeP =
+    binOpP <|> defP <|> wordP <|> numP
+  where
+    binOpP  = do
+      n <- oneOf "+-/*"
+      case n of
+        '+' -> return (BinOp Plus)
+        '-' -> return (BinOp Minus)
+        '/' -> return (BinOp Div)
+        '*' -> return (BinOp Mul)
+    wordP = fmap RWord $ do
+            x <- letter
+            xs <- many (letter <|> digit)
+            return (x:xs)
+    numP = fmap Num int
+    defP = do
+        _ <- char ':'
+        spaces
+        w <- wordP
+        spaces
+        ws <- tokeP `sepEndBy` spaces
+        _ <- char ';'
+        return (Def w ws)
 
-integer :: Parser Integer
-integer = lexeme L.integer
+toList (S (_,xs)) = xs
 
-reservedWord :: T.Text -> Parser ()
-reservedWord w = string (T.unpack w) *> notFollowedBy alphaNumChar *> sc
+push :: Int -> ForthState -> Either ForthError ForthState
+push x (S (e,xs)) = Right $ S (e, x : xs)
 
-reservedWords :: [T.Text]
-reservedWords = ["dup", "drop", "swap", "over"]
-
--- TODO: type error
---identifier :: Parser T.Text
---identifier =
---    (lexeme . try) (p >>= check)
---  where
---    p       = (:) <$> letterChar <*> many alphaNumChar
---    check x = if x `elem` reservedWords
---              then fail $ "keyword " ++ show x ++ " cannot be an identifier"
---              else return x
-
-toList Empty  = []
-toList (S xs) = xs
-
-push :: Int -> ForthState -> Either Err ForthState
-push x (S xs) = Right . S $ x : xs
-
---pop :: Stack -> Either Err (Int, Stack)
---pop [] = Left StackUnderflow
---pop (x:xs) = Right (x, xs)
-
-dup :: ForthState -> Either Err ForthState
-dup Empty = Left StackUnderflow
-dup (S (x:xs)) = Right . S $ x : x : xs
-
-drp :: ForthState -> Either Err ForthState
-drp Empty = Left StackUnderflow
-drp (S xs)
+dup :: ForthState -> Either ForthError ForthState
+dup (S (e,xs))
     | length xs < 1 = Left StackUnderflow
-    | otherwise     = Right . S $ tail xs
+    | otherwise     = Right $ S (e, x : xs)
+  where
+    x = head xs
 
-swp :: ForthState -> Either Err ForthState
-swp Empty = Left StackUnderflow
-swp (S xs)
+drp :: ForthState -> Either ForthError ForthState
+drp (S (e,xs))
+    | length xs < 1 = Left StackUnderflow
+    | otherwise     = Right $ S (e, tail xs)
+
+swp :: ForthState -> Either ForthError ForthState
+swp (S (e,xs))
     | length xs < 2 = Left StackUnderflow
-    | otherwise     = Right . S $ xs !! 1 : head xs : drop 2 xs
+    | otherwise     = Right $ S (e, xs !! 1 : head xs : drop 2 xs)
 
 -- TODO: Does OVER mean what I think it means?
-ovr :: ForthState -> Either Err ForthState
-ovr Empty = Left StackUnderflow
-ovr (S xs)
+ovr :: ForthState -> Either ForthError ForthState
+ovr (S (e,xs))
     | length xs < 2 = Left StackUnderflow
-    | otherwise     = Right . S $ a : b : a : tl
+    | otherwise     = Right $ S (e, a : b : a : tl)
+  where
+    (a:b:tl) = xs
+
+binOp :: (Int -> Int -> Int) -> ForthState -> Either ForthError ForthState
+binOp o (S (e,xs))
+    | length xs < 2 = Left StackUnderflow
+    | otherwise     = Right $ S (e, o b a : tl)
   where
     (a:b:tl) = xs
 
 -- let xs = [1,2,4]
 -- add xs >>= add
 -- Right [7]
-add :: ForthState -> Either Err ForthState
-add Empty = Left StackUnderflow
-add (S xs)
-    | length xs < 2 = Left StackUnderflow
-    | otherwise     = Right . S $ a + b : tl
-  where
-    (a:b:tl) = xs
-
--- TODO: other binops
+add      = binOp (+)
+subtract = binOp (-)
+multiply = binOp (*)
+divide s@(S (e,xs))
+  | length xs < 2 = Left StackUnderflow
+  | xs !! 1 == 0  = Left DivisionByZero
+  | otherwise     = binOp div s

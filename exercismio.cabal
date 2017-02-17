@@ -31,6 +31,7 @@ library
 --                     , Etl
 --                     , Frequency
 --                     , FoodChain
+                       , Forth
 --                     , Garden
 --                     , Grains
 --                     , Leap
@@ -50,7 +51,7 @@ library
 --                     , Raindrops
 --                     , RobotSimulator
 --                     , RunLength
-                       , Say
+--                     , Say
 --                     , School
 --                     , Scrabble
 --                     , SecretHandshake
@@ -74,6 +75,7 @@ library
                      , deepseq
                      , split
                      , parsec
+                     , parsec-numbers
                      , parallel
                      , time
                      , text
