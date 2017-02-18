@@ -40,6 +40,7 @@ toList (S (_,stack)) = reverse stack
 -- Parsing
 -- TODO: the exercise really wants us to process Text not String.
 
+punctuation :: String
 punctuation = "-_?!"
 
 defPunc :: String
