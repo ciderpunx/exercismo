@@ -1,59 +1,68 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module Forth where
+module Forth (ForthError(..), empty, eval, evalText, toList, runStr) where
 
 import Control.Monad (foldM)
 import Text.Parsec hiding (Empty)
 import Prelude hiding (subtract)
 import Text.ParserCombinators.Parsec.Number
+import qualified Data.Text as T
+import Data.Char (toLower, isAlphaNum)
 
 data ForthError = DivisionByZero
-         | StackUnderflow
-         | InvalidWord
-         | UnknownWord String
-         deriving Show
+                | StackUnderflow
+                | InvalidWord
+                | UnknownWord String
+                deriving (Show, Eq)
 
-data ForthState = S ([(String,Token)], [Int]) deriving Show
+data ForthState = S ([(Token,[Token])], [Int]) 
+                deriving Show
 
 data Token = BinOp Op
            | RWord String
            | Def Token [Token]
            | Num Int
-           deriving Show
+           deriving (Show, Eq)
 
 data Op = Plus
         | Minus
         | Mul
         | Div
-        deriving Show
+        deriving (Show, Eq)
 
-eval str =
-    let ts = parse progP "" str
-    in case ts of
-      Left p -> error $ "Parse error: " ++ show p
-      Right tokens -> foldM evalTok empty tokens
-
-evalTok :: ForthState -> Token -> Either ForthError ForthState
-evalTok (S (env, ss)) (Num x) = Right $ S (env, x:ss)
-evalTok ss (BinOp Plus)       = add ss
-evalTok ss (BinOp Minus)      = subtract ss
-evalTok ss (BinOp Mul)        = multiply ss
-evalTok ss (BinOp Div)        = divide ss
-evalTok ss (RWord "dup")      = dup ss
-evalTok ss (RWord "drop")     = drp ss
-evalTok ss (RWord "swap")     = swp ss
--- evalTok (S (env, ss)) (RWord w) = undefined -- see if word is in the env
-evalTok ss (RWord xs)         = Left $ UnknownWord xs
-
-
-
+empty :: ForthState
 empty = S ([],[])
+
+toList :: ForthState -> [Int]
+toList (S (_,stack)) = reverse stack
+
+-- Parsing
+-- TODO: the exercise really wants us to process Text not String.
+
+punctuation = "-_?!"
+
+defPunc :: String
+defPunc = ";:"
+
+operators :: String
+operators = "+-/*"
+
+isAlphaNumOrPuncOrOperator :: Char -> Bool
+isAlphaNumOrPuncOrOperator c = isAlphaNum c || c `elem` defPunc || c `elem` punctuation || c `elem` operators
+
+nonAlphaNum :: (Stream s m Char) => ParsecT s u m Char
+nonAlphaNum = satisfy (not . isAlphaNumOrPuncOrOperator) <?> "nonAlphaNum"
+
+whiteSpace :: (Stream s m Char) => ParsecT s u m ()
+whiteSpace = skipMany (space <|> nonAlphaNum) <?> "whitespace"
 
 progP :: Parsec String () [Token]
 progP = do
-    tokens <- tokeP `sepEndBy` spaces
+    tokens <- tokeP `sepEndBy` whiteSpace
     _ <- eof
     return tokens
+
 
 tokeP :: Parsec String () Token
 tokeP =
@@ -68,22 +77,61 @@ tokeP =
         '*' -> return (BinOp Mul)
     wordP = fmap RWord $ do
             x <- letter
-            xs <- many (letter <|> digit)
+            xs <- many (letter <|> digit <|> puncP)
             return (x:xs)
+    puncP = oneOf punctuation
     numP = fmap Num int
     defP = do
         _ <- char ':'
-        spaces
-        w <- wordP
-        spaces
-        ws <- tokeP `sepEndBy` spaces
+        whiteSpace
+        w <- tokeP
+        whiteSpace
+        ws <- tokeP `sepEndBy` whiteSpace
         _ <- char ';'
         return (Def w ws)
 
-toList (S (_,xs)) = xs
+-- Interpreting
+runStr :: String -> Either ForthError [Int]
+runStr = fmap toList . eval
 
-push :: Int -> ForthState -> Either ForthError ForthState
-push x (S (e,xs)) = Right $ S (e, x : xs)
+-- this is kind of dumb because we already deal with folding through the
+-- input (in evalStr)
+runTxts :: [T.Text] -> Either ForthError [Int]
+runTxts = fmap toList . foldM (flip evalText) empty
+
+
+eval :: String -> Either ForthError ForthState
+eval str = evalStr str empty
+
+evalText :: T.Text -> ForthState -> Either ForthError ForthState
+evalText = evalStr . T.unpack
+
+evalStr :: String -> ForthState -> Either ForthError ForthState
+evalStr str state =
+    let ts = parse progP "" (map toLower str)
+    in case ts of
+      Left p -> error $ "Parse error: " ++ show p
+      Right tokens -> foldM evalTok state tokens
+
+evalTok :: ForthState -> Token -> Either ForthError ForthState
+evalTok (S (env, stack)) (Num x) = Right $ S (env, x:stack)
+evalTok state (BinOp Plus)       = add state
+evalTok state (BinOp Minus)      = subtract state
+evalTok state (BinOp Mul)        = multiply state
+evalTok state (BinOp Div)        = divide state
+evalTok (S (env, stack)) (Def k ts) =
+    case k of
+      (RWord x) -> Right (S ((k,ts) : env, stack))
+      otherwise ->  Left InvalidWord -- this was originally a parser error, but tests fail that way
+evalTok state@(S (env, _)) t@(RWord w) =
+    case lookup t env of
+      Just tokens -> foldM evalTok state tokens -- NB repetition, TODO
+      Nothing -> case w of
+        "dup"     -> dup state
+        "drop"    -> drp state
+        "swap"    -> swp state
+        "over"    -> ovr state
+        otherwise ->  Left (UnknownWord w)
 
 dup :: ForthState -> Either ForthError ForthState
 dup (S (e,xs))
@@ -102,11 +150,10 @@ swp (S (e,xs))
     | length xs < 2 = Left StackUnderflow
     | otherwise     = Right $ S (e, xs !! 1 : head xs : drop 2 xs)
 
--- TODO: Does OVER mean what I think it means?
 ovr :: ForthState -> Either ForthError ForthState
 ovr (S (e,xs))
     | length xs < 2 = Left StackUnderflow
-    | otherwise     = Right $ S (e, a : b : a : tl)
+    | otherwise     = Right $ S (e, b : a : b : tl)
   where
     (a:b:tl) = xs
 
@@ -117,13 +164,10 @@ binOp o (S (e,xs))
   where
     (a:b:tl) = xs
 
--- let xs = [1,2,4]
--- add xs >>= add
--- Right [7]
 add      = binOp (+)
 subtract = binOp (-)
 multiply = binOp (*)
 divide s@(S (e,xs))
   | length xs < 2 = Left StackUnderflow
-  | xs !! 1 == 0  = Left DivisionByZero
+  | head xs == 0  = Left DivisionByZero
   | otherwise     = binOp div s
