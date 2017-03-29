@@ -19,7 +19,7 @@ parseSgf xs =
       Left err -> Nothing
       Right tree -> Just tree
 
--- A gameTree is ( followed by 0 or more sequences followed by 1 or more gameTrees followed by )
+-- A gameTree is ( followed by 0 or more sequences followed by 0 or more gameTrees followed by )
 gameTree  :: Parsec T.Text () SgfTree
 gameTree = do
     _ <- char '('
