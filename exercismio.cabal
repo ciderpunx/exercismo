@@ -31,7 +31,7 @@ library
 --                     , Etl
 --                     , Frequency
 --                     , FoodChain
-                       , Forth
+--                     , Forth
 --                     , Garden
 --                     , Grains
 --                     , Leap
@@ -47,6 +47,7 @@ library
 --                     , PigLatin
 --                     , PrimeFactors
 --                     , Prime
+                       , Sgf
 --                     , Queens
 --                     , Raindrops
 --                     , RobotSimulator

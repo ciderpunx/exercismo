@@ -1,14 +1,12 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- Good docs for SGF format at http://www.red-bean.com/sgf/sgf4.html
 module Sgf(parseSgf) where
 
-import qualified Data.Text as T -- hiding (zipWith,concat, map)
-import qualified Data.Map as M
+import Data.Maybe (fromJust)
 import Data.Tree
 import Text.Parsec hiding (Empty)
-import Text.Parsec.Char
+import qualified Data.Text as T
+import qualified Data.Map as M
 
 type Property = (T.Text, [T.Text])
 type GameTree = [SgfTree]
@@ -21,69 +19,71 @@ parseSgf xs =
       Left err -> Nothing
       Right tree -> Just tree
 
-sgfTreeToList :: SgfTree -> [[Property]]
-sgfTreeToList (Node lbl subForest) =
-      M.toList lbl : concatMap sgfTreeToList subForest
-
--- A gametree is a ( followed by zero or more sequences followed by 1 or more gametrees followed by )
+-- A gameTree is ( followed by 0 or more sequences followed by 1 or more gameTrees followed by )
 gameTree  :: Parsec T.Text () SgfTree
 gameTree = do
     _ <- char '('
     s <- sequ
+    ts <- many gameTree
     _ <- char ')'
-    return s
+    return (makeTree s ts)
 
--- Sequence (sequ) is paren followed by 1 or more nodes followed by 0 or more sub-sequences or gameTrees followed by bracket
--- This doesn't exactly follow the spec -- game trees ought to come after subsequences, but its slightly easier to write this way
-sequ  :: Parsec T.Text () SgfTree
-sequ = do
-  n <- node
-  ns <- many (gameTree <|> sequ)
-  return $ Node (M.fromList n) ns
+makeTree :: [SgfNode] -> [SgfTree] -> SgfTree
+makeTree [] _      = error "Shouldn't happen, maybe something wrong in Parsec library many1 function?"
+makeTree [n] ts    = Node n ts
+makeTree (n:ns) ts = Node n [makeTree ns ts]
 
--- Node is a semicolon followed by 1 or more properties
+-- A sequence (sequ) is 1 or more nodes
+sequ :: Parsec T.Text () [SgfNode]
+sequ = return . map M.fromList =<< many1 node
+
+-- A node is a semicolon followed by 0 or more properties
 node :: Parsec T.Text () [Property]
-node = do
-    _ <- char ';'
-    many1 property
+node = char ';' *> many property
 
--- Property is propIdent followed by 1 or more propVals.
+-- A property is propIdent followed by 1 or more propVals.
 property :: Parsec T.Text () Property
 property = do
     key <- propIdent
     items <- many1 propVal
     return (key, items)
 
--- The spec only allows for propIdents to have 1 or 2 capital letters we consume more but
--- return just the first 2
+-- A propIdent is 1 or 2 capital letters
 propIdent :: Parsec T.Text () T.Text
 propIdent = do
     a <- upper
-    b <- many upper
+    b <- optUpper
     return $ T.pack (a:b)
+  where
+    optUpper = option "" (do {u <- upper; return [u] })
 
--- propVal is square bracket followed by 0 or more letters (for our purposes) 
--- followed by square bracket
+-- A propVal is square bracket followed by 0 or more propChars (for our purposes) followed by square bracket
 propVal :: Parsec T.Text () T.Text
-propVal = do
-  _ <- char '['
-  val <- many' propChars
-  _ <- char ']'
-  return $ cleanWhitespace val -- (filter (\v -> v/='\r' && v/='\n') val)
+propVal = return . cleanWhitespace =<< between (char '[') (char ']') (many' propChars)
 
---propChars :: ParsecT T.Text u Data.Functor.Identity.Identity Char
+-- A propChar is either an escaped character or any other character except ]
+propChars :: Parsec T.Text () Char
 propChars = escaped <|> noneOf "]"
 
--- dealing wth escaped chars, code from https://codereview.stackexchange.com/questions/2406/parsing-strings-with-escaped-characters-using-parsec
+-- The next few functions deal with escaped chars
+-- code from: https://codereview.stackexchange.com/questions/2406/parsing-strings-with-escaped-characters-using-parsec
+escaped :: Parsec T.Text () Char
 escaped = char '\\' >> choice (zipWith escapedChar codes replacements)
+
+escapedChar :: Char -> Char -> Parsec T.Text () Char
 escapedChar code replacement = char code >> return replacement
-codes        = "bnfrt\\\"/[]()\r\n"
+
+codes :: String
+codes = "bnfrt\\\"/[]()\r\n"
+
+replacements :: String
 replacements = "\b\n\f\r\t\\\"/[]()\0\0"
 
--- convenience, parse many chars then pack into a text
+-- Parse many chars then pack into a Data.Text
 many' :: Parsec T.Text () Char -> Parsec T.Text () T.Text
 many' = fmap T.pack . many
 
+-- Squish newlines and tabs into single spaces, remove nuls
 cleanWhitespace :: T.Text -> T.Text
 cleanWhitespace =
       T.replace "\0" ""
