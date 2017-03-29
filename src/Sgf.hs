@@ -1,49 +1,78 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- Good docs for SGF format at http://www.red-bean.com/sgf/sgf4.html
 module Sgf(parseSgf) where
 
-import Data.Text hiding (zipWith)
+import qualified Data.Text as T -- hiding (zipWith,concat, map)
+import qualified Data.Map as M
+import Data.Tree
 import Text.Parsec hiding (Empty)
 import Text.Parsec.Char
 
-type NodeDatum = (Text, [Text])
-data Node = Node [NodeDatum] [Node] deriving Show
-data Statement = Stmt [Node] [Statement] deriving Show
+type Property = (T.Text, [T.Text])
+type GameTree = [SgfTree]
+type SgfTree = Tree SgfNode
+type SgfNode = M.Map T.Text [T.Text]
 
-parseSgf :: Text -> Maybe Statement
+parseSgf :: T.Text -> Maybe SgfTree
 parseSgf xs =
-    case parse statement "" xs of
+    case parse gameTree "" xs of
       Left err -> Nothing
-      Right stmt -> Just stmt
+      Right tree -> Just tree
 
--- statement is paren followed by 0 or more nodes followed by 0 or more statements folowed by bracket
-statement :: Parsec Text () Statement
-statement = do
+sgfTreeToList :: SgfTree -> [[Property]]
+sgfTreeToList (Node lbl subForest) =
+      M.toList lbl : concatMap sgfTreeToList subForest
+
+-- A gametree is a ( followed by zero or more sequences followed by 1 or more gametrees followed by )
+gameTree  :: Parsec T.Text () SgfTree
+gameTree = do
     _ <- char '('
-    nodes <- many node
-    stmts <- many statement
+    s <- sequ
     _ <- char ')'
-    return $ Stmt nodes stmts
+    return s
 
--- node is semicolon followed by capital letter followed by 1 or more items
-node :: Parsec Text () Node
+-- Sequence (sequ) is paren followed by 1 or more nodes followed by 0 or more sub-sequences or gameTrees followed by bracket
+-- This doesn't exactly follow the spec -- game trees ought to come after subsequences, but its slightly easier to write this way
+sequ  :: Parsec T.Text () SgfTree
+sequ = do
+  n <- node
+  ns <- many (gameTree <|> sequ)
+  return $ Node (M.fromList n) ns
+
+-- Node is a semicolon followed by 1 or more properties
+node :: Parsec T.Text () [Property]
 node = do
     _ <- char ';'
-    key <- many1' upper
-    items <- many1 item
-    let nd =(key, items) :: NodeDatum
-    return (Node [nd] [])
+    many1 property
 
--- item is square bracket followed by 1 or more letters followed by square bracket
-item :: Parsec Text () Text
-item = do
+-- Property is propIdent followed by 1 or more propVals.
+property :: Parsec T.Text () Property
+property = do
+    key <- propIdent
+    items <- many1 propVal
+    return (key, items)
+
+-- The spec only allows for propIdents to have 1 or 2 capital letters we consume more but
+-- return just the first 2
+propIdent :: Parsec T.Text () T.Text
+propIdent = do
+    a <- upper
+    b <- many upper
+    return $ T.pack (a:b)
+
+-- propVal is square bracket followed by 0 or more letters (for our purposes) 
+-- followed by square bracket
+propVal :: Parsec T.Text () T.Text
+propVal = do
   _ <- char '['
-  val <- many' itemChars
+  val <- many' propChars
   _ <- char ']'
   return $ cleanWhitespace val -- (filter (\v -> v/='\r' && v/='\n') val)
 
-itemChars = escaped <|> noneOf "]"
+--propChars :: ParsecT T.Text u Data.Functor.Identity.Identity Char
+propChars = escaped <|> noneOf "]"
 
 -- dealing wth escaped chars, code from https://codereview.stackexchange.com/questions/2406/parsing-strings-with-escaped-characters-using-parsec
 escaped = char '\\' >> choice (zipWith escapedChar codes replacements)
@@ -52,16 +81,13 @@ codes        = "bnfrt\\\"/[]()\r\n"
 replacements = "\b\n\f\r\t\\\"/[]()\0\0"
 
 -- convenience, parse many chars then pack into a text
-many' :: Parsec Text () Char -> Parsec Text () Text
-many' = fmap pack . many
+many' :: Parsec T.Text () Char -> Parsec T.Text () T.Text
+many' = fmap T.pack . many
 
---many1' :: ParsecT Text u Data.Functor.Identity.Identity Char -> ParsecT Text u Data.Functor.Identity.Identity Text
-many1' = fmap pack . many1
-
-cleanWhitespace :: Text -> Text
+cleanWhitespace :: T.Text -> T.Text
 cleanWhitespace =
-      replace "\0" ""
-    . replace "\t" " "
-    . replace "\r" " "
-    . replace "\n" " "
-    . replace "\r\n" " "
+      T.replace "\0" ""
+    . T.replace "\t" " "
+    . T.replace "\r" " "
+    . T.replace "\n" " "
+    . T.replace "\r\n" " "
