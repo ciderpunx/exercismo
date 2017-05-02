@@ -64,7 +64,6 @@ progP = do
     _ <- eof
     return tokens
 
-
 tokeP :: Parsec String () Token
 tokeP =
     binOpP <|> defP <|> wordP <|> numP
@@ -100,7 +99,6 @@ runStr = fmap toList . eval
 runTxts :: [T.Text] -> Either ForthError [Int]
 runTxts = fmap toList . foldM (flip evalText) empty
 
-
 eval :: String -> Either ForthError ForthState
 eval str = evalStr str empty
 
@@ -112,7 +110,10 @@ evalStr str state =
     let ts = parse progP "" (map toLower str)
     in case ts of
       Left p -> error $ "Parse error: " ++ show p
-      Right tokens -> foldM evalTok state tokens
+      Right tokens -> evalToks state tokens
+
+evalToks :: ForthState -> [Token] -> Either ForthError ForthState
+evalToks = foldM evalTok
 
 evalTok :: ForthState -> Token -> Either ForthError ForthState
 evalTok (S (env, stack)) (Num x) = Right $ S (env, x:stack)
@@ -126,7 +127,7 @@ evalTok (S (env, stack)) (Def k ts) =
       otherwise ->  Left InvalidWord -- this was originally a parser error, but tests fail that way
 evalTok state@(S (env, _)) t@(RWord w) =
     case lookup t env of
-      Just tokens -> foldM evalTok state tokens -- NB repetition, TODO
+      Just tokens -> evalToks state tokens -- NB repetition, TODO
       Nothing -> case w of
         "dup"     -> dup state
         "drop"    -> drp state
