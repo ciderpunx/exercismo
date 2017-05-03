@@ -22,7 +22,8 @@ library
 --                     , AtBash
 --                     , Beer
 --                     , Bob
-                       , Bowling
+--                     , Bowling
+                       , Brackets
 --                     , BST
 --                     , Change
 --                     , Clock
