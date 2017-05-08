@@ -7,7 +7,7 @@ license:             GPLv3
 license-file:        LICENSE
 author:              Charlie Harvey
 maintainer:          https://charlieharvey.org.uk
-copyright:           2016 Charlie Harvey
+copyright:           2016-2017 Charlie Harvey
 category:            Stuff
 build-type:          Simple
 -- extra-source-files:
