@@ -23,7 +23,7 @@ library
 --                     , Beer
 --                     , Bob
 --                     , Bowling
-                       , Brackets
+--                     , Brackets
 --                     , BST
 --                     , Change
 --                     , Clock
@@ -33,7 +33,7 @@ library
 --                     , Etl
 --                     , Frequency
 --                     , FoodChain
---                     , Forth
+                     , Forth
 --                     , Garden
 --                     , Grains
 --                     , Leap
